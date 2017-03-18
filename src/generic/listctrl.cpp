@@ -168,7 +168,7 @@ void wxListItemData::SetItem( const wxListItem &info )
         if ( m_attr )
             m_attr->AssignFrom(*info.GetAttributes());
         else
-            m_attr = new wxListItemAttr(*info.GetAttributes());
+            m_attr = new wxItemAttr(*info.GetAttributes());
     }
 
     if ( m_rect )
@@ -654,7 +654,7 @@ int wxListLineData::GetImage( int index ) const
     return item->GetImage();
 }
 
-wxListItemAttr *wxListLineData::GetAttr() const
+wxItemAttr *wxListLineData::GetAttr() const
 {
     wxListItemDataList::compatibility_iterator node = m_items.GetFirst();
     wxCHECK_MSG( node, NULL, wxT("invalid column index in GetAttr()") );
@@ -663,7 +663,7 @@ wxListItemAttr *wxListLineData::GetAttr() const
     return item->GetAttr();
 }
 
-void wxListLineData::SetAttr(wxListItemAttr *attr)
+void wxListLineData::SetAttr(wxItemAttr *attr)
 {
     wxListItemDataList::compatibility_iterator node = m_items.GetFirst();
     wxCHECK_RET( node, wxT("invalid column index in SetAttr()") );
@@ -677,7 +677,7 @@ void wxListLineData::ApplyAttributes(wxDC *dc,
                                      bool highlighted,
                                      bool current)
 {
-    const wxListItemAttr * const attr = GetAttr();
+    const wxItemAttr * const attr = GetAttr();
 
     wxWindow * const listctrl = m_owner->GetParent();
 
@@ -797,7 +797,7 @@ void wxListLineData::DrawInReportMode( wxDC *dc,
     x += 2;
 #endif
 
-    if ( m_owner->HasCheckboxes() )
+    if ( m_owner->HasCheckBoxes() )
     {
         wxSize cbSize = wxRendererNative::Get().GetCheckBoxSize(m_owner);
         int yOffset = (rect.height - cbSize.GetHeight()) / 2;
@@ -820,7 +820,7 @@ void wxListLineData::DrawInReportMode( wxDC *dc,
         wxListItemData *item = node->GetData();
 
         int width = m_owner->GetColumnWidth(col);
-        if (col == 0 && m_owner->HasCheckboxes())
+        if (col == 0 && m_owner->HasCheckBoxes())
             width -= x;
         int xOld = x;
         x += width;
@@ -1609,7 +1609,7 @@ void wxListMainWindow::Init()
     m_lineSelectSingleOnUp =
     m_lineBeforeLastClicked = (size_t)-1;
 
-    m_hasCheckboxes = false;
+    m_hasCheckBoxes = false;
 }
 
 wxListMainWindow::wxListMainWindow()
@@ -2457,7 +2457,7 @@ void wxListMainWindow::OnMouse( wxMouseEvent &event )
             evtCtx.SetEventObject(GetParent());
             GetParent()->GetEventHandler()->ProcessEvent(evtCtx);
         }
-        else
+        else if (event.LeftDown())
         {
             // reset the selection and bail out
             HighlightAll(false);
@@ -2579,7 +2579,7 @@ void wxListMainWindow::OnMouse( wxMouseEvent &event )
         bool cmdModifierDown = event.CmdDown();
         if ( IsSingleSel() || !(cmdModifierDown || event.ShiftDown()) )
         {
-            if (IsInsideCheckbox(current, x, y))
+            if (IsInsideCheckBox(current, x, y))
             {
                 CheckItem(current, !IsItemChecked(current));
             }
@@ -3015,6 +3015,7 @@ void wxListMainWindow::OnChar( wxKeyEvent &event )
                     SetItemState(item,
                                  wxLIST_STATE_FOCUSED | wxLIST_STATE_SELECTED,
                                  wxLIST_STATE_FOCUSED | wxLIST_STATE_SELECTED);
+                    EnsureVisible(item);
 
                     // Reset the bell flag if it had been temporarily disabled
                     // before.
@@ -3703,14 +3704,14 @@ bool wxListMainWindow::GetItemPosition(long item, wxPoint& pos) const
 // checkboxes
 // ----------------------------------------------------------------------------
 
-bool wxListMainWindow::HasCheckboxes() const
+bool wxListMainWindow::HasCheckBoxes() const
 {
-    return m_hasCheckboxes;
+    return m_hasCheckBoxes;
 }
 
-bool wxListMainWindow::EnableCheckboxes(bool enable)
+bool wxListMainWindow::EnableCheckBoxes(bool enable)
 {
-    m_hasCheckboxes = enable;
+    m_hasCheckBoxes = enable;
 
     m_dirty = true;
     m_headerWidth = 0;
@@ -3736,9 +3737,9 @@ bool wxListMainWindow::IsItemChecked(long item) const
     return line->IsChecked();
 }
 
-bool wxListMainWindow::IsInsideCheckbox(long item, int x, int y)
+bool wxListMainWindow::IsInsideCheckBox(long item, int x, int y)
 {
-    if ( HasCheckboxes() )
+    if ( HasCheckBoxes() )
     {
         wxRect lineRect = GetLineRect(item);
         wxSize cbSize = wxRendererNative::Get().GetCheckBoxSize(this);
@@ -4769,20 +4770,20 @@ void wxGenericListCtrl::OnScroll(wxScrollWinEvent& event)
     event.Skip();
 }
 
-bool wxGenericListCtrl::HasCheckboxes() const
+bool wxGenericListCtrl::HasCheckBoxes() const
 {
     if (!InReportView())
         return false;
 
-    return m_mainWin->HasCheckboxes();
+    return m_mainWin->HasCheckBoxes();
 }
 
-bool wxGenericListCtrl::EnableCheckboxes(bool enable)
+bool wxGenericListCtrl::EnableCheckBoxes(bool enable)
 {
     if (!InReportView())
         return false;
 
-    return m_mainWin->EnableCheckboxes(enable);
+    return m_mainWin->EnableCheckBoxes(enable);
 }
 
 void wxGenericListCtrl::CheckItem(long item, bool state)

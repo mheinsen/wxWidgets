@@ -353,8 +353,7 @@ void wxWindowMac::SetPeer(wxOSXWidgetImpl* peer)
         if ( !m_hasFont )
             DoSetWindowVariant( m_windowVariant );
         
-        if ( !m_label.empty() )
-            GetPeer()->SetLabel( wxStripMenuCodes(m_label, wxStrip_Mnemonics), GetFont().GetEncoding() ) ;
+        GetPeer()->SetInitialLabel( wxStripMenuCodes(m_label, wxStrip_Mnemonics), GetFont().GetEncoding() ) ;
         
         // for controls we want to use best size for wxDefaultSize params )
         if ( !GetPeer()->IsUserPane() )
@@ -2738,6 +2737,13 @@ void wxWidgetImpl::RemoveAssociations(wxWidgetImpl* impl)
             }
         }
     }
+}
+
+void wxWidgetImpl::RemoveAssociation(WXWidget control)
+{
+	wxCHECK_RET( control != NULL, wxT("attempt to remove a NULL WXWidget from control map") );
+
+	wxWinMacControlList.erase(control);
 }
 
 wxIMPLEMENT_ABSTRACT_CLASS(wxWidgetImpl, wxObject);

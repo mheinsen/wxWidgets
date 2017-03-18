@@ -101,7 +101,7 @@ struct WXDLLIMPEXP_CORE wxVisualAttributes
     wxColour colBg;
 };
 
-// different window variants, on platforms like eg mac uses different
+// different window variants, on platforms like e.g. mac uses different
 // rendering sizes
 enum wxWindowVariant
 {
@@ -205,7 +205,7 @@ public:
     virtual void SetLabel(const wxString& label) = 0;
     virtual wxString GetLabel() const = 0;
 
-        // the window name is used for ressource setting in X, it is not the
+        // the window name is used for resource setting in X, it is not the
         // same as the window title/label
     virtual void SetName( const wxString &name ) { m_windowName = name; }
     virtual wxString GetName() const { return m_windowName; }
@@ -508,7 +508,7 @@ public:
     }
 
         // Override these methods for windows that have a virtual size
-        // independent of their client size.  eg. the virtual area of a
+        // independent of their client size. e.g. the virtual area of a
         // wxScrolledWindow.
 
     virtual void DoSetVirtualSize( int x, int y );
@@ -526,7 +526,7 @@ public:
     }
 
     // returns the magnification of the content of this window
-    // eg 2.0 for a window on a retina screen
+    // e.g. 2.0 for a window on a retina screen
     virtual double GetContentScaleFactor() const;
 
     // return the size of the left/right and top/bottom borders in x and y
@@ -581,7 +581,7 @@ public:
     public:
         // Notice that window can be NULL here, for convenience. In this case
         // this class simply doesn't do anything.
-        wxEXPLICIT ChildrenRepositioningGuard(wxWindowBase* win)
+        explicit ChildrenRepositioningGuard(wxWindowBase* win)
             : m_win(win),
               m_callEnd(win && win->BeginRepositioningChildren())
         {
@@ -842,7 +842,7 @@ public:
     void SetEventHandler( wxEvtHandler *handler );
 
         // push/pop event handler: allows to chain a custom event handler to
-        // alreasy existing ones
+        // already existing ones
     void PushEventHandler( wxEvtHandler *handler );
     wxEvtHandler *PopEventHandler( bool deleteHandler = false );
 
@@ -1069,7 +1069,7 @@ public:
     const wxRegion& GetUpdateRegion() const { return m_updateRegion; }
     wxRegion& GetUpdateRegion() { return m_updateRegion; }
 
-        // get the update rectangleregion bounding box in client coords
+        // get the update rectangle region bounding box in client coords
     wxRect GetUpdateClientRect() const;
 
         // these functions verify whether the given point/rectangle belongs to
@@ -1449,7 +1449,7 @@ public:
     // ----------------------
 #if wxUSE_ACCESSIBILITY
     // Override to create a specific accessible object.
-    virtual wxAccessible* CreateAccessible();
+    virtual wxAccessible* CreateAccessible() { return NULL; }
 
     // Sets the accessible object.
     void SetAccessible(wxAccessible* accessible) ;
@@ -1457,7 +1457,8 @@ public:
     // Returns the accessible object.
     wxAccessible* GetAccessible() { return m_accessible; }
 
-    // Returns the accessible object, creating if necessary.
+    // Returns the accessible object, calling CreateAccessible if necessary.
+    // May return NULL, in which case system-provide accessible is used.
     wxAccessible* GetOrCreateAccessible() ;
 #endif
 

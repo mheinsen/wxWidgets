@@ -823,9 +823,6 @@ public:
     wxMacCoreGraphicsFontData( wxGraphicsRenderer* renderer, const wxFont &font, const wxColour& col );
     ~wxMacCoreGraphicsFontData();
 
-#if wxOSX_USE_ATSU_TEXT
-    virtual ATSUStyle GetATSUStyle() { return m_macATSUIStyle; }
-#endif
     CTFontRef OSXGetCTFont() const { return m_ctFont ; }
     wxColour GetColour() const { return m_colour ; }
 
@@ -839,9 +836,6 @@ private :
     wxColour m_colour;
     bool m_underlined,
          m_strikethrough;
-#if wxOSX_USE_ATSU_TEXT
-    ATSUStyle m_macATSUIStyle;
-#endif
     wxCFRef< CTFontRef > m_ctFont;
 #if wxOSX_USE_IPHONE
     UIFont*  m_uiFont;
@@ -859,52 +853,10 @@ wxMacCoreGraphicsFontData::wxMacCoreGraphicsFontData(wxGraphicsRenderer* rendere
     m_uiFont = CreateUIFont(font);
     wxMacCocoaRetain( m_uiFont );
 #endif
-#if wxOSX_USE_ATSU_TEXT
-    OSStatus status = noErr;
-    m_macATSUIStyle = NULL;
-
-    status = ATSUCreateAndCopyStyle( (ATSUStyle) font.MacGetATSUStyle() , &m_macATSUIStyle );
-
-    wxASSERT_MSG( status == noErr, wxT("couldn't create ATSU style") );
-
-    // we need the scale here ...
-
-    Fixed atsuSize = IntToFixed( int( 1 * font.GetPointSize()) );
-    RGBColor atsuColor ;
-    col.GetRGBColor( &atsuColor );
-    ATSUAttributeTag atsuTags[] =
-    {
-            kATSUSizeTag ,
-            kATSUColorTag ,
-    };
-    ByteCount atsuSizes[WXSIZEOF(atsuTags)] =
-    {
-            sizeof( Fixed ) ,
-            sizeof( RGBColor ) ,
-    };
-    ATSUAttributeValuePtr atsuValues[WXSIZEOF(atsuTags)] =
-    {
-            &atsuSize ,
-            &atsuColor ,
-    };
-
-    status = ::ATSUSetAttributes(
-        m_macATSUIStyle, WXSIZEOF(atsuTags),
-        atsuTags, atsuSizes, atsuValues);
-
-    wxASSERT_MSG( status == noErr , wxT("couldn't modify ATSU style") );
-#endif
 }
 
 wxMacCoreGraphicsFontData::~wxMacCoreGraphicsFontData()
 {
-#if wxOSX_USE_ATSU_TEXT
-    if ( m_macATSUIStyle )
-    {
-        ::ATSUDisposeStyle((ATSUStyle)m_macATSUIStyle);
-        m_macATSUIStyle = NULL;
-    }
-#endif
 #if wxOSX_USE_IPHONE
     wxMacCocoaRelease( m_uiFont );
 #endif
@@ -1354,6 +1306,9 @@ public:
 
     // resets the clipping to original extent
     virtual void ResetClip() wxOVERRIDE;
+
+    // returns bounding box of the clipping region
+    virtual void GetClipBox(wxDouble* x, wxDouble* y, wxDouble* w, wxDouble* h) wxOVERRIDE;
 
     virtual void * GetNativeContext() wxOVERRIDE;
 
@@ -1964,6 +1919,38 @@ void wxMacCoreGraphicsContext::ResetClip()
     CheckInvariants();    
 }
 
+void wxMacCoreGraphicsContext::GetClipBox(wxDouble* x, wxDouble* y, wxDouble* w, wxDouble* h)
+{
+    // This function is not yet tested.
+    // TODO: Do the tests.
+    CGRect r;
+
+    if ( m_cgContext )
+    {
+        r = CGContextGetClipBoundingBox(m_cgContext);
+    }
+    else
+    {
+#if wxOSX_USE_COCOA_OR_CARBON
+        HIShapeGetBounds(m_clipRgn, &r);
+#else
+        r = CGRectMake(0, 0, 0, 0);
+    // allow usage as measuring context
+    // wxFAIL_MSG( "Needs a valid context for clipping" );
+#endif
+    }
+    CheckInvariants();
+
+    if ( x )
+        *x = r.origin.x;
+    if ( y )
+        *y = r.origin.y;
+    if ( w )
+        *w = r.size.width;
+    if ( h )
+        *h = r.size.height;
+}
+
 void wxMacCoreGraphicsContext::StrokePath( const wxGraphicsPath &path )
 {
     if ( m_pen.IsNull() )
@@ -2360,8 +2347,7 @@ void wxMacCoreGraphicsContext::GetTextExtent( const wxString &str, wxDouble *wid
 
 void wxMacCoreGraphicsContext::GetPartialTextExtents(const wxString& text, wxArrayDouble& widths) const
 {
-    widths.Empty();
-    widths.Add(0, text.length());
+    widths.clear();
 
     wxCHECK_RET( !m_font.IsNull(), wxT("wxMacCoreGraphicsContext::DrawText - no valid font set") );
 
@@ -2379,10 +2365,17 @@ void wxMacCoreGraphicsContext::GetPartialTextExtents(const wxString& text, wxArr
     wxCFRef<CFAttributedStringRef> attrtext( CFAttributedStringCreate(kCFAllocatorDefault, t, attributes) );
     wxCFRef<CTLineRef> line( CTLineCreateWithAttributedString(attrtext) );
 
-    int chars = text.length();
-    for ( int pos = 0; pos < (int)chars; pos ++ )
+    widths.reserve(text.length());
+    CFIndex u16index = 1;
+    for ( wxString::const_iterator iter = text.begin(); iter != text.end(); ++iter, ++u16index )
     {
-        widths[pos] = CTLineGetOffsetForStringIndex( line, pos+1 , NULL );
+        // Take care of surrogate pairs: they take two, not one, of UTF-16 code
+        // units used by CoreText.
+        if ( *iter >= 0x10000 )
+        {
+            ++u16index;
+        }
+        widths.push_back( CTLineGetOffsetForStringIndex( line, u16index, NULL ) );
     }
 
     CheckInvariants();

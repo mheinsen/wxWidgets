@@ -219,9 +219,10 @@ WXEXPAT_OBJECTS =  \
 	wxexpat_xmltok.o
 WXSCINTILLA_CXXFLAGS = -DNDEBUG -I$(top_srcdir)/src/stc/scintilla/include \
 	-I$(top_srcdir)/src/stc/scintilla/lexlib \
-	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DLINK_LEXERS \
-	$(__wxscintilla_usingdll_p) -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) \
-	$(__DEBUG_DEFINE_p) $(____SHARED) $(CPPFLAGS) $(CXXFLAGS)
+	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DNO_CXX11_REGEX \
+	-DLINK_LEXERS $(__wxscintilla_usingdll_p) -D__WX$(TOOLKIT)__ \
+	$(__WXUNIV_DEFINE_p) $(__DEBUG_DEFINE_p) $(____SHARED) $(CPPFLAGS) \
+	$(CXXFLAGS)
 WXSCINTILLA_OBJECTS =  \
 	wxscintilla_LexA68k.o \
 	wxscintilla_LexAbaqus.o \
@@ -254,6 +255,7 @@ WXSCINTILLA_OBJECTS =  \
 	wxscintilla_LexDMAP.o \
 	wxscintilla_LexDMIS.o \
 	wxscintilla_LexECL.o \
+	wxscintilla_LexEDIFACT.o \
 	wxscintilla_LexEiffel.o \
 	wxscintilla_LexErlang.o \
 	wxscintilla_LexErrorList.o \
@@ -267,6 +269,7 @@ WXSCINTILLA_OBJECTS =  \
 	wxscintilla_LexHex.o \
 	wxscintilla_LexHTML.o \
 	wxscintilla_LexInno.o \
+	wxscintilla_LexJSON.o \
 	wxscintilla_LexKix.o \
 	wxscintilla_LexKVIrc.o \
 	wxscintilla_LexLaTeX.o \
@@ -528,6 +531,7 @@ ALL_BASE_HEADERS =  \
 	wx/meta/removeref.h \
 	wx/fswatcher.h \
 	wx/generic/fswatcher.h \
+	wx/secretstore.h \
 	$(BASE_PLATFORM_HDR) \
 	wx/fs_inet.h \
 	wx/protocol/file.h \
@@ -709,6 +713,7 @@ ALL_PORTS_BASE_HEADERS =  \
 	wx/meta/removeref.h \
 	wx/fswatcher.h \
 	wx/generic/fswatcher.h \
+	wx/secretstore.h \
 	wx/unix/app.h \
 	wx/unix/apptbase.h \
 	wx/unix/apptrait.h \
@@ -739,6 +744,7 @@ ALL_PORTS_BASE_HEADERS =  \
 	wx/msw/stackwalk.h \
 	wx/msw/stdpaths.h \
 	wx/msw/winundef.h \
+	wx/msw/winver.h \
 	wx/msw/wrapcctl.h \
 	wx/msw/wrapcdlg.h \
 	wx/msw/wrapwin.h \
@@ -845,6 +851,7 @@ ALL_BASE_SOURCES =  \
 	src/common/zstream.cpp \
 	src/common/fswatchercmn.cpp \
 	src/generic/fswatcherg.cpp \
+	src/common/secretstore.cpp \
 	src/common/fdiodispatcher.cpp \
 	src/common/selectdispatcher.cpp \
 	src/unix/appunix.cpp \
@@ -863,6 +870,7 @@ ALL_BASE_SOURCES =  \
 	src/unix/mimetype.cpp \
 	src/unix/fswatcher_inotify.cpp \
 	src/unix/stdpaths.cpp \
+	src/unix/secretstore.cpp \
 	src/msw/basemsw.cpp \
 	src/msw/crashrpt.cpp \
 	src/msw/debughlp.cpp \
@@ -882,6 +890,7 @@ ALL_BASE_SOURCES =  \
 	src/msw/utils.cpp \
 	src/msw/utilsexc.cpp \
 	src/msw/fswatcher.cpp \
+	src/msw/secretstore.cpp \
 	$(BASE_OSX_SRC) \
 	src/common/event.cpp \
 	src/common/fs_mem.cpp \
@@ -914,8 +923,8 @@ MONODLL_CFLAGS = $(__monodll_PCH_INC) -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) \
 	$(__INC_JPEG_p) $(__INC_PNG_p) $(__INC_ZLIB_p) $(__INC_REGEX_p) \
 	$(__INC_EXPAT_p) -I$(top_srcdir)/src/stc/scintilla/include \
 	-I$(top_srcdir)/src/stc/scintilla/lexlib \
-	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DLINK_LEXERS \
-	-DwxUSE_BASE=1 -DWXMAKINGDLL $(PIC_FLAG) $(CPPFLAGS) $(CFLAGS)
+	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DNO_CXX11_REGEX \
+	-DLINK_LEXERS -DwxUSE_BASE=1 -DWXMAKINGDLL $(PIC_FLAG) $(CPPFLAGS) $(CFLAGS)
 MONODLL_CXXFLAGS = $(__monodll_PCH_INC) -D__WX$(TOOLKIT)__ \
 	$(__WXUNIV_DEFINE_p) $(__DEBUG_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) \
 	$(__RTTI_DEFINE_p) $(__THREAD_DEFINE_p) -DWXBUILDING $(__INC_TIFF_BUILD_p) \
@@ -923,9 +932,9 @@ MONODLL_CXXFLAGS = $(__monodll_PCH_INC) -D__WX$(TOOLKIT)__ \
 	$(__INC_REGEX_p) $(__INC_EXPAT_p) \
 	-I$(top_srcdir)/src/stc/scintilla/include \
 	-I$(top_srcdir)/src/stc/scintilla/lexlib \
-	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DLINK_LEXERS \
-	-DwxUSE_BASE=1 -DWXMAKINGDLL $(PIC_FLAG) $(CXXWARNINGS) $(CPPFLAGS) \
-	$(CXXFLAGS)
+	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DNO_CXX11_REGEX \
+	-DLINK_LEXERS -DwxUSE_BASE=1 -DWXMAKINGDLL $(PIC_FLAG) $(CXXWARNINGS) \
+	$(CPPFLAGS) $(CXXFLAGS)
 MONODLL_OBJCXXFLAGS = $(__monodll_PCH_INC) -D__WX$(TOOLKIT)__ \
 	$(__WXUNIV_DEFINE_p) $(__DEBUG_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) \
 	$(__RTTI_DEFINE_p) $(__THREAD_DEFINE_p) -DWXBUILDING $(__INC_TIFF_BUILD_p) \
@@ -933,8 +942,9 @@ MONODLL_OBJCXXFLAGS = $(__monodll_PCH_INC) -D__WX$(TOOLKIT)__ \
 	$(__INC_REGEX_p) $(__INC_EXPAT_p) \
 	-I$(top_srcdir)/src/stc/scintilla/include \
 	-I$(top_srcdir)/src/stc/scintilla/lexlib \
-	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DLINK_LEXERS \
-	-DwxUSE_BASE=1 -DWXMAKINGDLL $(PIC_FLAG) $(CPPFLAGS) $(OBJCXXFLAGS)
+	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DNO_CXX11_REGEX \
+	-DLINK_LEXERS -DwxUSE_BASE=1 -DWXMAKINGDLL $(PIC_FLAG) $(CPPFLAGS) \
+	$(OBJCXXFLAGS)
 MONODLL_OBJECTS =  \
 	monodll_any.o \
 	monodll_appbase.o \
@@ -1023,6 +1033,7 @@ MONODLL_OBJECTS =  \
 	monodll_zstream.o \
 	monodll_fswatchercmn.o \
 	monodll_fswatcherg.o \
+	monodll_common_secretstore.o \
 	$(__BASE_PLATFORM_SRC_OBJECTS) \
 	monodll_event.o \
 	monodll_fs_mem.o \
@@ -1053,8 +1064,8 @@ MONOLIB_CFLAGS = $(__monolib_PCH_INC) -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) \
 	$(__INC_JPEG_p) $(__INC_PNG_p) $(__INC_ZLIB_p) $(__INC_REGEX_p) \
 	$(__INC_EXPAT_p) -I$(top_srcdir)/src/stc/scintilla/include \
 	-I$(top_srcdir)/src/stc/scintilla/lexlib \
-	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DLINK_LEXERS \
-	-DwxUSE_BASE=1 $(CPPFLAGS) $(CFLAGS)
+	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DNO_CXX11_REGEX \
+	-DLINK_LEXERS -DwxUSE_BASE=1 $(CPPFLAGS) $(CFLAGS)
 MONOLIB_CXXFLAGS = $(__monolib_PCH_INC) -D__WX$(TOOLKIT)__ \
 	$(__WXUNIV_DEFINE_p) $(__DEBUG_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) \
 	$(__RTTI_DEFINE_p) $(__THREAD_DEFINE_p) -DWXBUILDING $(__INC_TIFF_BUILD_p) \
@@ -1062,8 +1073,8 @@ MONOLIB_CXXFLAGS = $(__monolib_PCH_INC) -D__WX$(TOOLKIT)__ \
 	$(__INC_REGEX_p) $(__INC_EXPAT_p) \
 	-I$(top_srcdir)/src/stc/scintilla/include \
 	-I$(top_srcdir)/src/stc/scintilla/lexlib \
-	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DLINK_LEXERS \
-	-DwxUSE_BASE=1 $(CXXWARNINGS) $(CPPFLAGS) $(CXXFLAGS)
+	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DNO_CXX11_REGEX \
+	-DLINK_LEXERS -DwxUSE_BASE=1 $(CXXWARNINGS) $(CPPFLAGS) $(CXXFLAGS)
 MONOLIB_OBJCXXFLAGS = $(__monolib_PCH_INC) -D__WX$(TOOLKIT)__ \
 	$(__WXUNIV_DEFINE_p) $(__DEBUG_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) \
 	$(__RTTI_DEFINE_p) $(__THREAD_DEFINE_p) -DWXBUILDING $(__INC_TIFF_BUILD_p) \
@@ -1071,8 +1082,8 @@ MONOLIB_OBJCXXFLAGS = $(__monolib_PCH_INC) -D__WX$(TOOLKIT)__ \
 	$(__INC_REGEX_p) $(__INC_EXPAT_p) \
 	-I$(top_srcdir)/src/stc/scintilla/include \
 	-I$(top_srcdir)/src/stc/scintilla/lexlib \
-	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DLINK_LEXERS \
-	-DwxUSE_BASE=1 $(CPPFLAGS) $(OBJCXXFLAGS)
+	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DNO_CXX11_REGEX \
+	-DLINK_LEXERS -DwxUSE_BASE=1 $(CPPFLAGS) $(OBJCXXFLAGS)
 MONOLIB_OBJECTS =  \
 	monolib_any.o \
 	monolib_appbase.o \
@@ -1161,6 +1172,7 @@ MONOLIB_OBJECTS =  \
 	monolib_zstream.o \
 	monolib_fswatchercmn.o \
 	monolib_fswatcherg.o \
+	monolib_common_secretstore.o \
 	$(__BASE_PLATFORM_SRC_OBJECTS_1) \
 	monolib_event.o \
 	monolib_fs_mem.o \
@@ -1291,6 +1303,7 @@ BASEDLL_OBJECTS =  \
 	basedll_zstream.o \
 	basedll_fswatchercmn.o \
 	basedll_fswatcherg.o \
+	basedll_common_secretstore.o \
 	$(__BASE_PLATFORM_SRC_OBJECTS_2) \
 	basedll_event.o \
 	basedll_fs_mem.o \
@@ -1404,6 +1417,7 @@ BASELIB_OBJECTS =  \
 	baselib_zstream.o \
 	baselib_fswatchercmn.o \
 	baselib_fswatcherg.o \
+	baselib_common_secretstore.o \
 	$(__BASE_PLATFORM_SRC_OBJECTS_3) \
 	baselib_event.o \
 	baselib_fs_mem.o \
@@ -1884,7 +1898,7 @@ AUIDLL_OBJECTS =  \
 	auidll_auibar.o \
 	auidll_tabmdi.o \
 	auidll_tabart.o \
-	auidll_xh_auinotbk.o \
+	auidll_xh_aui.o \
 	auidll_xh_auitoolb.o \
 	$(__AUI_GTK_SRC_OBJECTS_2) \
 	$(__AUI_PLATFORM_SRC_OBJECTS_2)
@@ -1902,7 +1916,7 @@ AUILIB_OBJECTS =  \
 	auilib_auibar.o \
 	auilib_tabmdi.o \
 	auilib_tabart.o \
-	auilib_xh_auinotbk.o \
+	auilib_xh_aui.o \
 	auilib_xh_auitoolb.o \
 	$(__AUI_GTK_SRC_OBJECTS_3) \
 	$(__AUI_PLATFORM_SRC_OBJECTS_3)
@@ -2021,9 +2035,9 @@ STCDLL_CXXFLAGS = $(__stcdll_PCH_INC) -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) \
 	$(__INC_JPEG_p) $(__INC_PNG_p) $(__INC_ZLIB_p) $(__INC_REGEX_p) \
 	$(__INC_EXPAT_p) -I$(top_srcdir)/src/stc/scintilla/include \
 	-I$(top_srcdir)/src/stc/scintilla/lexlib \
-	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DLINK_LEXERS \
-	-DWXUSINGDLL -DWXMAKINGDLL_STC $(PIC_FLAG) $(CXXWARNINGS) $(CPPFLAGS) \
-	$(CXXFLAGS)
+	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DNO_CXX11_REGEX \
+	-DLINK_LEXERS -DWXUSINGDLL -DWXMAKINGDLL_STC $(PIC_FLAG) $(CXXWARNINGS) \
+	$(CPPFLAGS) $(CXXFLAGS)
 STCDLL_OBJECTS =  \
 	$(__stcdll___win32rc) \
 	stcdll_stc.o \
@@ -2036,8 +2050,8 @@ STCLIB_CXXFLAGS = $(__stclib_PCH_INC) -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) \
 	$(__INC_JPEG_p) $(__INC_PNG_p) $(__INC_ZLIB_p) $(__INC_REGEX_p) \
 	$(__INC_EXPAT_p) -I$(top_srcdir)/src/stc/scintilla/include \
 	-I$(top_srcdir)/src/stc/scintilla/lexlib \
-	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DLINK_LEXERS \
-	$(CXXWARNINGS) $(CPPFLAGS) $(CXXFLAGS)
+	-I$(top_srcdir)/src/stc/scintilla/src -D__WX__ -DSCI_LEXER -DNO_CXX11_REGEX \
+	-DLINK_LEXERS $(CXXWARNINGS) $(CPPFLAGS) $(CXXFLAGS)
 STCLIB_OBJECTS =  \
 	stclib_stc.o \
 	stclib_PlatWX.o \
@@ -2238,6 +2252,7 @@ COND_TOOLKIT_OSX_COCOA_BASE_OSX_SRC =  \
 	src/osx/core/strconv_cf.cpp \
 	src/osx/core/utilsexc_base.cpp \
 	src/osx/cocoa/utils_base.mm \
+	src/osx/core/secretstore.cpp \
 	src/common/fdiodispatcher.cpp \
 	src/common/selectdispatcher.cpp \
 	src/unix/appunix.cpp \
@@ -2263,6 +2278,7 @@ COND_TOOLKIT_OSX_IPHONE_BASE_OSX_SRC =  \
 	src/osx/core/strconv_cf.cpp \
 	src/osx/core/utilsexc_base.cpp \
 	src/osx/cocoa/utils_base.mm \
+	src/osx/core/secretstore.cpp \
 	src/common/fdiodispatcher.cpp \
 	src/common/selectdispatcher.cpp \
 	src/unix/appunix.cpp \
@@ -2302,7 +2318,8 @@ COND_TOOLKIT_COCOA_BASE_OSX_SRC =  \
 	src/osx/core/evtloop_cf.cpp \
 	src/osx/core/strconv_cf.cpp \
 	src/osx/core/utilsexc_base.cpp \
-	src/osx/cocoa/utils_base.mm
+	src/osx/cocoa/utils_base.mm \
+	src/osx/core/secretstore.cpp
 @COND_TOOLKIT_COCOA@BASE_OSX_SRC = $(COND_TOOLKIT_COCOA_BASE_OSX_SRC)
 COND_TOOLKIT_GTK_BASE_OSX_SRC =  \
 	src/common/fdiodispatcher.cpp \
@@ -2325,7 +2342,8 @@ COND_TOOLKIT_GTK_BASE_OSX_SRC =  \
 	src/osx/core/evtloop_cf.cpp \
 	src/osx/core/strconv_cf.cpp \
 	src/osx/core/utilsexc_base.cpp \
-	src/osx/cocoa/utils_base.mm
+	src/osx/cocoa/utils_base.mm \
+	src/osx/core/secretstore.cpp
 @COND_TOOLKIT_GTK@BASE_OSX_SRC = $(COND_TOOLKIT_GTK_BASE_OSX_SRC)
 COND_TOOLKIT_X11_BASE_OSX_SRC =  \
 	src/common/fdiodispatcher.cpp \
@@ -2348,7 +2366,8 @@ COND_TOOLKIT_X11_BASE_OSX_SRC =  \
 	src/osx/core/evtloop_cf.cpp \
 	src/osx/core/strconv_cf.cpp \
 	src/osx/core/utilsexc_base.cpp \
-	src/osx/cocoa/utils_base.mm
+	src/osx/cocoa/utils_base.mm \
+	src/osx/core/secretstore.cpp
 @COND_TOOLKIT_X11@BASE_OSX_SRC = $(COND_TOOLKIT_X11_BASE_OSX_SRC)
 COND_TOOLKIT_MOTIF_BASE_OSX_SRC =  \
 	src/common/fdiodispatcher.cpp \
@@ -2371,7 +2390,8 @@ COND_TOOLKIT_MOTIF_BASE_OSX_SRC =  \
 	src/osx/core/evtloop_cf.cpp \
 	src/osx/core/strconv_cf.cpp \
 	src/osx/core/utilsexc_base.cpp \
-	src/osx/cocoa/utils_base.mm
+	src/osx/cocoa/utils_base.mm \
+	src/osx/core/secretstore.cpp
 @COND_TOOLKIT_MOTIF@BASE_OSX_SRC = $(COND_TOOLKIT_MOTIF_BASE_OSX_SRC)
 COND_TOOLKIT__BASE_OSX_SRC =  \
 	src/common/fdiodispatcher.cpp \
@@ -2394,7 +2414,8 @@ COND_TOOLKIT__BASE_OSX_SRC =  \
 	src/osx/core/evtloop_cf.cpp \
 	src/osx/core/strconv_cf.cpp \
 	src/osx/core/utilsexc_base.cpp \
-	src/osx/cocoa/utils_base.mm
+	src/osx/cocoa/utils_base.mm \
+	src/osx/core/secretstore.cpp
 @COND_TOOLKIT_@BASE_OSX_SRC = $(COND_TOOLKIT__BASE_OSX_SRC)
 COND_TOOLKIT_OSX_COCOA_BASE_OSX_HDR =  \
 	wx/osx/core/cfdataref.h \
@@ -2562,6 +2583,7 @@ COND_PLATFORM_WIN32_1_BASE_PLATFORM_HDR =  \
 	wx/msw/stackwalk.h \
 	wx/msw/stdpaths.h \
 	wx/msw/winundef.h \
+	wx/msw/winver.h \
 	wx/msw/wrapcctl.h \
 	wx/msw/wrapcdlg.h \
 	wx/msw/wrapwin.h \
@@ -2651,7 +2673,8 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_LOWLEVEL_HDR =  \
 	wx/gtk/region.h \
 	wx/gtk/tooltip.h \
 	wx/gtk/toplevel.h \
-	wx/gtk/window.h
+	wx/gtk/window.h \
+	wx/gtk/mimetype.h
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_2@LOWLEVEL_HDR = $(COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_LOWLEVEL_HDR)
 COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_LOWLEVEL_HDR =  \
 	$(GTK_PLATFORM_HDR) \
@@ -2679,7 +2702,8 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_LOWLEVEL_HDR =  \
 	wx/gtk/region.h \
 	wx/gtk/tooltip.h \
 	wx/gtk/toplevel.h \
-	wx/gtk/window.h
+	wx/gtk/window.h \
+	wx/gtk/mimetype.h
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3@LOWLEVEL_HDR = $(COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_LOWLEVEL_HDR)
 COND_TOOLKIT_MOTIF_LOWLEVEL_HDR =  \
 	wx/generic/caret.h \
@@ -3872,6 +3896,7 @@ COND_USE_GUI_1_ALL_GUI_HEADERS =  \
 	wx/systhemectrl.h \
 	wx/collheaderctrl.h \
 	wx/generic/collheaderctrl.h \
+	wx/itemattr.h \
 	$(LOWLEVEL_HDR) \
 	$(GUI_CORE_HEADERS) \
 	$(ADVANCED_HDR) \
@@ -3974,7 +3999,7 @@ COND_USE_GUI_1_ALL_GUI_HEADERS =  \
 	wx/aui/tabmdi.h \
 	wx/aui/aui.h \
 	wx/aui/tabart.h \
-	wx/xrc/xh_auinotbk.h \
+	wx/xrc/xh_aui.h \
 	wx/xrc/xh_auitoolb.h \
 	$(AUI_GTK_HDR) \
 	$(AUI_PLATFORM_HDR) \
@@ -4099,6 +4124,7 @@ COND_PLATFORM_MACOSX_1___BASE_PLATFORM_SRC_OBJECTS =  \
 	monodll_strconv_cf.o \
 	monodll_utilsexc_base.o \
 	monodll_utils_base.o \
+	monodll_core_secretstore.o \
 	monodll_fdiodispatcher.o \
 	monodll_selectdispatcher.o \
 	monodll_appunix.o \
@@ -4135,7 +4161,8 @@ COND_PLATFORM_UNIX_1___BASE_PLATFORM_SRC_OBJECTS =  \
 	monodll_fswatcher_kqueue.o \
 	monodll_unix_mimetype.o \
 	monodll_fswatcher_inotify.o \
-	monodll_unix_stdpaths.o
+	monodll_unix_stdpaths.o \
+	monodll_unix_secretstore.o
 @COND_PLATFORM_UNIX_1@__BASE_PLATFORM_SRC_OBJECTS = $(COND_PLATFORM_UNIX_1___BASE_PLATFORM_SRC_OBJECTS)
 COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS =  \
 	monodll_basemsw.o \
@@ -4156,7 +4183,8 @@ COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS =  \
 	monodll_msw_timer.o \
 	monodll_msw_utils.o \
 	monodll_utilsexc.o \
-	monodll_fswatcher.o
+	monodll_fswatcher.o \
+	monodll_msw_secretstore.o
 @COND_PLATFORM_WIN32_1@__BASE_PLATFORM_SRC_OBJECTS = $(COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS)
 @COND_PLATFORM_WIN32_1@__BASE_AND_GUI_PLATFORM_SRC_OBJECTS \
 @COND_PLATFORM_WIN32_1@	= monodll_msw_main.o monodll_volume.o
@@ -4280,7 +4308,7 @@ COND_USE_GUI_1___MONOLIB_GUI_SRC_OBJECTS =  \
 	monodll_auibar.o \
 	monodll_tabmdi.o \
 	monodll_tabart.o \
-	monodll_xh_auinotbk.o \
+	monodll_xh_aui.o \
 	monodll_xh_auitoolb.o \
 	$(__AUI_GTK_SRC_OBJECTS) \
 	$(__AUI_PLATFORM_SRC_OBJECTS) \
@@ -4300,7 +4328,7 @@ COND_USE_GUI_1___MONOLIB_GUI_SRC_OBJECTS =  \
 	monodll_ribbon_control.o \
 	monodll_gallery.o \
 	monodll_page.o \
-	monodll_ribbon_panel.o \
+	monodll_panel.o \
 	monodll_ribbon_toolbar.o \
 	monodll_xh_ribbon.o \
 	monodll_richtextbuffer.o \
@@ -4820,6 +4848,7 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_2___LOWLEVEL_SRC_OBJECTS =  \
 	monodll_gtk_utilsgtk.o \
 	monodll_gtk_win_gtk.o \
 	monodll_gtk_window.o \
+	monodll_gtk_mimetype.o \
 	monodll_gtk_dcclient.o \
 	monodll_gtk_dcmemory.o \
 	monodll_gtk_dcscreen.o
@@ -4858,7 +4887,8 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS =  \
 	monodll_gtk_toplevel.o \
 	monodll_gtk_utilsgtk.o \
 	monodll_gtk_win_gtk.o \
-	monodll_gtk_window.o
+	monodll_gtk_window.o \
+	monodll_gtk_mimetype.o
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3@__LOWLEVEL_SRC_OBJECTS = $(COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS)
 COND_TOOLKIT_MOTIF___LOWLEVEL_SRC_OBJECTS =  \
 	monodll_generic_caret.o \
@@ -5330,7 +5360,6 @@ COND_TOOLKIT_MSW___GUI_SRC_OBJECTS =  \
 	monodll_msw_notebook.o \
 	monodll_access.o \
 	monodll_ownerdrw.o \
-	monodll_msw_panel.o \
 	monodll_progdlg.o \
 	monodll_msw_radiobox.o \
 	monodll_msw_radiobut.o \
@@ -5351,6 +5380,7 @@ COND_TOOLKIT_MSW___GUI_SRC_OBJECTS =  \
 	monodll_msw_tglbtn.o \
 	monodll_treectrl.o \
 	monodll_systhemectrl.o \
+	monodll_customdraw.o \
 	monodll_msw_checklst.o \
 	monodll_msw_fdrepdlg.o \
 	monodll_msw_fontdlg.o
@@ -5524,6 +5554,7 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_2___LOWLEVEL_SRC_OBJECTS_1 =  \
 	monodll_gtk_utilsgtk.o \
 	monodll_gtk_win_gtk.o \
 	monodll_gtk_window.o \
+	monodll_gtk_mimetype.o \
 	monodll_gtk_dcclient.o \
 	monodll_gtk_dcmemory.o \
 	monodll_gtk_dcscreen.o
@@ -5562,7 +5593,8 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_1 =  \
 	monodll_gtk_toplevel.o \
 	monodll_gtk_utilsgtk.o \
 	monodll_gtk_win_gtk.o \
-	monodll_gtk_window.o
+	monodll_gtk_window.o \
+	monodll_gtk_mimetype.o
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3@__LOWLEVEL_SRC_OBJECTS_1 = $(COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_1)
 COND_TOOLKIT_MOTIF___LOWLEVEL_SRC_OBJECTS_1 =  \
 	monodll_generic_caret.o \
@@ -6113,6 +6145,7 @@ COND_PLATFORM_MACOSX_1___BASE_PLATFORM_SRC_OBJECTS_1 =  \
 	monolib_strconv_cf.o \
 	monolib_utilsexc_base.o \
 	monolib_utils_base.o \
+	monolib_core_secretstore.o \
 	monolib_fdiodispatcher.o \
 	monolib_selectdispatcher.o \
 	monolib_appunix.o \
@@ -6149,7 +6182,8 @@ COND_PLATFORM_UNIX_1___BASE_PLATFORM_SRC_OBJECTS_1 =  \
 	monolib_fswatcher_kqueue.o \
 	monolib_unix_mimetype.o \
 	monolib_fswatcher_inotify.o \
-	monolib_unix_stdpaths.o
+	monolib_unix_stdpaths.o \
+	monolib_unix_secretstore.o
 @COND_PLATFORM_UNIX_1@__BASE_PLATFORM_SRC_OBJECTS_1 = $(COND_PLATFORM_UNIX_1___BASE_PLATFORM_SRC_OBJECTS_1)
 COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS_1 =  \
 	monolib_basemsw.o \
@@ -6170,7 +6204,8 @@ COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS_1 =  \
 	monolib_msw_timer.o \
 	monolib_msw_utils.o \
 	monolib_utilsexc.o \
-	monolib_fswatcher.o
+	monolib_fswatcher.o \
+	monolib_msw_secretstore.o
 @COND_PLATFORM_WIN32_1@__BASE_PLATFORM_SRC_OBJECTS_1 = $(COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS_1)
 @COND_PLATFORM_WIN32_1@__BASE_AND_GUI_PLATFORM_SRC_OBJECTS_1 \
 @COND_PLATFORM_WIN32_1@	= monolib_msw_main.o monolib_volume.o
@@ -6294,7 +6329,7 @@ COND_USE_GUI_1___MONOLIB_GUI_SRC_OBJECTS_1 =  \
 	monolib_auibar.o \
 	monolib_tabmdi.o \
 	monolib_tabart.o \
-	monolib_xh_auinotbk.o \
+	monolib_xh_aui.o \
 	monolib_xh_auitoolb.o \
 	$(__AUI_GTK_SRC_OBJECTS_1) \
 	$(__AUI_PLATFORM_SRC_OBJECTS_1) \
@@ -6314,7 +6349,7 @@ COND_USE_GUI_1___MONOLIB_GUI_SRC_OBJECTS_1 =  \
 	monolib_ribbon_control.o \
 	monolib_gallery.o \
 	monolib_page.o \
-	monolib_ribbon_panel.o \
+	monolib_panel.o \
 	monolib_ribbon_toolbar.o \
 	monolib_xh_ribbon.o \
 	monolib_richtextbuffer.o \
@@ -6834,6 +6869,7 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_2___LOWLEVEL_SRC_OBJECTS_2 =  \
 	monolib_gtk_utilsgtk.o \
 	monolib_gtk_win_gtk.o \
 	monolib_gtk_window.o \
+	monolib_gtk_mimetype.o \
 	monolib_gtk_dcclient.o \
 	monolib_gtk_dcmemory.o \
 	monolib_gtk_dcscreen.o
@@ -6872,7 +6908,8 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_2 =  \
 	monolib_gtk_toplevel.o \
 	monolib_gtk_utilsgtk.o \
 	monolib_gtk_win_gtk.o \
-	monolib_gtk_window.o
+	monolib_gtk_window.o \
+	monolib_gtk_mimetype.o
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3@__LOWLEVEL_SRC_OBJECTS_2 = $(COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_2)
 COND_TOOLKIT_MOTIF___LOWLEVEL_SRC_OBJECTS_2 =  \
 	monolib_generic_caret.o \
@@ -7344,7 +7381,6 @@ COND_TOOLKIT_MSW___GUI_SRC_OBJECTS_1 =  \
 	monolib_msw_notebook.o \
 	monolib_access.o \
 	monolib_ownerdrw.o \
-	monolib_msw_panel.o \
 	monolib_progdlg.o \
 	monolib_msw_radiobox.o \
 	monolib_msw_radiobut.o \
@@ -7365,6 +7401,7 @@ COND_TOOLKIT_MSW___GUI_SRC_OBJECTS_1 =  \
 	monolib_msw_tglbtn.o \
 	monolib_treectrl.o \
 	monolib_systhemectrl.o \
+	monolib_customdraw.o \
 	monolib_msw_checklst.o \
 	monolib_msw_fdrepdlg.o \
 	monolib_msw_fontdlg.o
@@ -7538,6 +7575,7 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_2___LOWLEVEL_SRC_OBJECTS_3 =  \
 	monolib_gtk_utilsgtk.o \
 	monolib_gtk_win_gtk.o \
 	monolib_gtk_window.o \
+	monolib_gtk_mimetype.o \
 	monolib_gtk_dcclient.o \
 	monolib_gtk_dcmemory.o \
 	monolib_gtk_dcscreen.o
@@ -7576,7 +7614,8 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_3 =  \
 	monolib_gtk_toplevel.o \
 	monolib_gtk_utilsgtk.o \
 	monolib_gtk_win_gtk.o \
-	monolib_gtk_window.o
+	monolib_gtk_window.o \
+	monolib_gtk_mimetype.o
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3@__LOWLEVEL_SRC_OBJECTS_3 = $(COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_3)
 COND_TOOLKIT_MOTIF___LOWLEVEL_SRC_OBJECTS_3 =  \
 	monolib_generic_caret.o \
@@ -8178,6 +8217,7 @@ COND_PLATFORM_MACOSX_1___BASE_PLATFORM_SRC_OBJECTS_2 =  \
 	basedll_strconv_cf.o \
 	basedll_utilsexc_base.o \
 	basedll_utils_base.o \
+	basedll_core_secretstore.o \
 	basedll_fdiodispatcher.o \
 	basedll_selectdispatcher.o \
 	basedll_appunix.o \
@@ -8214,7 +8254,8 @@ COND_PLATFORM_UNIX_1___BASE_PLATFORM_SRC_OBJECTS_2 =  \
 	basedll_fswatcher_kqueue.o \
 	basedll_unix_mimetype.o \
 	basedll_fswatcher_inotify.o \
-	basedll_unix_stdpaths.o
+	basedll_unix_stdpaths.o \
+	basedll_unix_secretstore.o
 @COND_PLATFORM_UNIX_1@__BASE_PLATFORM_SRC_OBJECTS_2 = $(COND_PLATFORM_UNIX_1___BASE_PLATFORM_SRC_OBJECTS_2)
 COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS_2 =  \
 	basedll_basemsw.o \
@@ -8235,7 +8276,8 @@ COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS_2 =  \
 	basedll_timer.o \
 	basedll_msw_utils.o \
 	basedll_utilsexc.o \
-	basedll_fswatcher.o
+	basedll_fswatcher.o \
+	basedll_msw_secretstore.o
 @COND_PLATFORM_WIN32_1@__BASE_PLATFORM_SRC_OBJECTS_2 = $(COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS_2)
 @COND_PLATFORM_WIN32_1@__BASE_AND_GUI_PLATFORM_SRC_OBJECTS_2 \
 @COND_PLATFORM_WIN32_1@	= basedll_main.o basedll_volume.o
@@ -8259,6 +8301,7 @@ COND_PLATFORM_MACOSX_1___BASE_PLATFORM_SRC_OBJECTS_3 =  \
 	baselib_strconv_cf.o \
 	baselib_utilsexc_base.o \
 	baselib_utils_base.o \
+	baselib_core_secretstore.o \
 	baselib_fdiodispatcher.o \
 	baselib_selectdispatcher.o \
 	baselib_appunix.o \
@@ -8295,7 +8338,8 @@ COND_PLATFORM_UNIX_1___BASE_PLATFORM_SRC_OBJECTS_3 =  \
 	baselib_fswatcher_kqueue.o \
 	baselib_unix_mimetype.o \
 	baselib_fswatcher_inotify.o \
-	baselib_unix_stdpaths.o
+	baselib_unix_stdpaths.o \
+	baselib_unix_secretstore.o
 @COND_PLATFORM_UNIX_1@__BASE_PLATFORM_SRC_OBJECTS_3 = $(COND_PLATFORM_UNIX_1___BASE_PLATFORM_SRC_OBJECTS_3)
 COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS_3 =  \
 	baselib_basemsw.o \
@@ -8316,7 +8360,8 @@ COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS_3 =  \
 	baselib_timer.o \
 	baselib_msw_utils.o \
 	baselib_utilsexc.o \
-	baselib_fswatcher.o
+	baselib_fswatcher.o \
+	baselib_msw_secretstore.o
 @COND_PLATFORM_WIN32_1@__BASE_PLATFORM_SRC_OBJECTS_3 = $(COND_PLATFORM_WIN32_1___BASE_PLATFORM_SRC_OBJECTS_3)
 @COND_PLATFORM_WIN32_1@__BASE_AND_GUI_PLATFORM_SRC_OBJECTS_3 \
 @COND_PLATFORM_WIN32_1@	= baselib_main.o baselib_volume.o
@@ -8989,6 +9034,7 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_2___LOWLEVEL_SRC_OBJECTS_4 =  \
 	coredll_gtk_utilsgtk.o \
 	coredll_gtk_win_gtk.o \
 	coredll_gtk_window.o \
+	coredll_mimetype.o \
 	coredll_gtk_dcclient.o \
 	coredll_gtk_dcmemory.o \
 	coredll_gtk_dcscreen.o
@@ -9027,7 +9073,8 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_4 =  \
 	coredll_gtk_toplevel.o \
 	coredll_gtk_utilsgtk.o \
 	coredll_gtk_win_gtk.o \
-	coredll_gtk_window.o
+	coredll_gtk_window.o \
+	coredll_mimetype.o
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3@__LOWLEVEL_SRC_OBJECTS_4 = $(COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_4)
 COND_TOOLKIT_MOTIF___LOWLEVEL_SRC_OBJECTS_4 =  \
 	coredll_generic_caret.o \
@@ -9499,7 +9546,6 @@ COND_TOOLKIT_MSW___GUI_SRC_OBJECTS_2 =  \
 	coredll_msw_notebook.o \
 	coredll_access.o \
 	coredll_ownerdrw.o \
-	coredll_panel.o \
 	coredll_progdlg.o \
 	coredll_msw_radiobox.o \
 	coredll_msw_radiobut.o \
@@ -9520,6 +9566,7 @@ COND_TOOLKIT_MSW___GUI_SRC_OBJECTS_2 =  \
 	coredll_msw_tglbtn.o \
 	coredll_treectrl.o \
 	coredll_systhemectrl.o \
+	coredll_customdraw.o \
 	coredll_msw_checklst.o \
 	coredll_msw_fdrepdlg.o \
 	coredll_msw_fontdlg.o
@@ -9693,6 +9740,7 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_2___LOWLEVEL_SRC_OBJECTS_5 =  \
 	coredll_gtk_utilsgtk.o \
 	coredll_gtk_win_gtk.o \
 	coredll_gtk_window.o \
+	coredll_mimetype.o \
 	coredll_gtk_dcclient.o \
 	coredll_gtk_dcmemory.o \
 	coredll_gtk_dcscreen.o
@@ -9731,7 +9779,8 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_5 =  \
 	coredll_gtk_toplevel.o \
 	coredll_gtk_utilsgtk.o \
 	coredll_gtk_win_gtk.o \
-	coredll_gtk_window.o
+	coredll_gtk_window.o \
+	coredll_mimetype.o
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3@__LOWLEVEL_SRC_OBJECTS_5 = $(COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_5)
 COND_TOOLKIT_MOTIF___LOWLEVEL_SRC_OBJECTS_5 =  \
 	coredll_generic_caret.o \
@@ -10458,6 +10507,7 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_2___LOWLEVEL_SRC_OBJECTS_6 =  \
 	corelib_gtk_utilsgtk.o \
 	corelib_gtk_win_gtk.o \
 	corelib_gtk_window.o \
+	corelib_mimetype.o \
 	corelib_gtk_dcclient.o \
 	corelib_gtk_dcmemory.o \
 	corelib_gtk_dcscreen.o
@@ -10496,7 +10546,8 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_6 =  \
 	corelib_gtk_toplevel.o \
 	corelib_gtk_utilsgtk.o \
 	corelib_gtk_win_gtk.o \
-	corelib_gtk_window.o
+	corelib_gtk_window.o \
+	corelib_mimetype.o
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3@__LOWLEVEL_SRC_OBJECTS_6 = $(COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_6)
 COND_TOOLKIT_MOTIF___LOWLEVEL_SRC_OBJECTS_6 =  \
 	corelib_generic_caret.o \
@@ -10968,7 +11019,6 @@ COND_TOOLKIT_MSW___GUI_SRC_OBJECTS_3 =  \
 	corelib_msw_notebook.o \
 	corelib_access.o \
 	corelib_ownerdrw.o \
-	corelib_panel.o \
 	corelib_progdlg.o \
 	corelib_msw_radiobox.o \
 	corelib_msw_radiobut.o \
@@ -10989,6 +11039,7 @@ COND_TOOLKIT_MSW___GUI_SRC_OBJECTS_3 =  \
 	corelib_msw_tglbtn.o \
 	corelib_treectrl.o \
 	corelib_systhemectrl.o \
+	corelib_customdraw.o \
 	corelib_msw_checklst.o \
 	corelib_msw_fdrepdlg.o \
 	corelib_msw_fontdlg.o
@@ -11162,6 +11213,7 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_2___LOWLEVEL_SRC_OBJECTS_7 =  \
 	corelib_gtk_utilsgtk.o \
 	corelib_gtk_win_gtk.o \
 	corelib_gtk_window.o \
+	corelib_mimetype.o \
 	corelib_gtk_dcclient.o \
 	corelib_gtk_dcmemory.o \
 	corelib_gtk_dcscreen.o
@@ -11200,7 +11252,8 @@ COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_7 =  \
 	corelib_gtk_toplevel.o \
 	corelib_gtk_utilsgtk.o \
 	corelib_gtk_win_gtk.o \
-	corelib_gtk_window.o
+	corelib_gtk_window.o \
+	corelib_mimetype.o
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3@__LOWLEVEL_SRC_OBJECTS_7 = $(COND_TOOLKIT_GTK_TOOLKIT_VERSION_3___LOWLEVEL_SRC_OBJECTS_7)
 COND_TOOLKIT_MOTIF___LOWLEVEL_SRC_OBJECTS_7 =  \
 	corelib_generic_caret.o \
@@ -15235,6 +15288,9 @@ wxscintilla_LexDMIS.o: $(srcdir)/src/stc/scintilla/lexers/LexDMIS.cxx
 wxscintilla_LexECL.o: $(srcdir)/src/stc/scintilla/lexers/LexECL.cxx
 	$(CXXC) -c -o $@ $(WXSCINTILLA_CXXFLAGS) $(srcdir)/src/stc/scintilla/lexers/LexECL.cxx
 
+wxscintilla_LexEDIFACT.o: $(srcdir)/src/stc/scintilla/lexers/LexEDIFACT.cxx
+	$(CXXC) -c -o $@ $(WXSCINTILLA_CXXFLAGS) $(srcdir)/src/stc/scintilla/lexers/LexEDIFACT.cxx
+
 wxscintilla_LexEiffel.o: $(srcdir)/src/stc/scintilla/lexers/LexEiffel.cxx
 	$(CXXC) -c -o $@ $(WXSCINTILLA_CXXFLAGS) $(srcdir)/src/stc/scintilla/lexers/LexEiffel.cxx
 
@@ -15273,6 +15329,9 @@ wxscintilla_LexHTML.o: $(srcdir)/src/stc/scintilla/lexers/LexHTML.cxx
 
 wxscintilla_LexInno.o: $(srcdir)/src/stc/scintilla/lexers/LexInno.cxx
 	$(CXXC) -c -o $@ $(WXSCINTILLA_CXXFLAGS) $(srcdir)/src/stc/scintilla/lexers/LexInno.cxx
+
+wxscintilla_LexJSON.o: $(srcdir)/src/stc/scintilla/lexers/LexJSON.cxx
+	$(CXXC) -c -o $@ $(WXSCINTILLA_CXXFLAGS) $(srcdir)/src/stc/scintilla/lexers/LexJSON.cxx
 
 wxscintilla_LexKix.o: $(srcdir)/src/stc/scintilla/lexers/LexKix.cxx
 	$(CXXC) -c -o $@ $(WXSCINTILLA_CXXFLAGS) $(srcdir)/src/stc/scintilla/lexers/LexKix.cxx
@@ -15823,6 +15882,9 @@ monodll_fswatchercmn.o: $(srcdir)/src/common/fswatchercmn.cpp $(MONODLL_ODEP)
 monodll_fswatcherg.o: $(srcdir)/src/generic/fswatcherg.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/generic/fswatcherg.cpp
 
+monodll_common_secretstore.o: $(srcdir)/src/common/secretstore.cpp $(MONODLL_ODEP)
+	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/common/secretstore.cpp
+
 monodll_unix_mimetype.o: $(srcdir)/src/unix/mimetype.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/unix/mimetype.cpp
 
@@ -15831,6 +15893,9 @@ monodll_fswatcher_inotify.o: $(srcdir)/src/unix/fswatcher_inotify.cpp $(MONODLL_
 
 monodll_unix_stdpaths.o: $(srcdir)/src/unix/stdpaths.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/unix/stdpaths.cpp
+
+monodll_unix_secretstore.o: $(srcdir)/src/unix/secretstore.cpp $(MONODLL_ODEP)
+	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/unix/secretstore.cpp
 
 monodll_basemsw.o: $(srcdir)/src/msw/basemsw.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/msw/basemsw.cpp
@@ -15889,6 +15954,9 @@ monodll_utilsexc.o: $(srcdir)/src/msw/utilsexc.cpp $(MONODLL_ODEP)
 monodll_fswatcher.o: $(srcdir)/src/msw/fswatcher.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/msw/fswatcher.cpp
 
+monodll_msw_secretstore.o: $(srcdir)/src/msw/secretstore.cpp $(MONODLL_ODEP)
+	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/msw/secretstore.cpp
+
 monodll_core_mimetype.o: $(srcdir)/src/osx/core/mimetype.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/osx/core/mimetype.cpp
 
@@ -15906,6 +15974,9 @@ monodll_utilsexc_base.o: $(srcdir)/src/osx/core/utilsexc_base.cpp $(MONODLL_ODEP
 
 monodll_utils_base.o: $(srcdir)/src/osx/cocoa/utils_base.mm $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/utils_base.mm
+
+monodll_core_secretstore.o: $(srcdir)/src/osx/core/secretstore.cpp $(MONODLL_ODEP)
+	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/osx/core/secretstore.cpp
 
 monodll_fswatcher_fsevents.o: $(srcdir)/src/osx/fswatcher_fsevents.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/osx/fswatcher_fsevents.cpp
@@ -16327,9 +16398,6 @@ monodll_access.o: $(srcdir)/src/msw/ole/access.cpp $(MONODLL_ODEP)
 monodll_ownerdrw.o: $(srcdir)/src/msw/ownerdrw.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/msw/ownerdrw.cpp
 
-monodll_msw_panel.o: $(srcdir)/src/msw/panel.cpp $(MONODLL_ODEP)
-	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/msw/panel.cpp
-
 monodll_progdlg.o: $(srcdir)/src/msw/progdlg.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/msw/progdlg.cpp
 
@@ -16389,6 +16457,9 @@ monodll_treectrl.o: $(srcdir)/src/msw/treectrl.cpp $(MONODLL_ODEP)
 
 monodll_systhemectrl.o: $(srcdir)/src/msw/systhemectrl.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/msw/systhemectrl.cpp
+
+monodll_customdraw.o: $(srcdir)/src/msw/customdraw.cpp $(MONODLL_ODEP)
+	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/msw/customdraw.cpp
 
 monodll_msw_checklst.o: $(srcdir)/src/msw/checklst.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/msw/checklst.cpp
@@ -17047,8 +17118,8 @@ monodll_tabmdi.o: $(srcdir)/src/aui/tabmdi.cpp $(MONODLL_ODEP)
 monodll_tabart.o: $(srcdir)/src/aui/tabart.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/aui/tabart.cpp
 
-monodll_xh_auinotbk.o: $(srcdir)/src/xrc/xh_auinotbk.cpp $(MONODLL_ODEP)
-	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/xrc/xh_auinotbk.cpp
+monodll_xh_aui.o: $(srcdir)/src/xrc/xh_aui.cpp $(MONODLL_ODEP)
+	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/xrc/xh_aui.cpp
 
 monodll_xh_auitoolb.o: $(srcdir)/src/xrc/xh_auitoolb.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/xrc/xh_auitoolb.cpp
@@ -17110,7 +17181,7 @@ monodll_gallery.o: $(srcdir)/src/ribbon/gallery.cpp $(MONODLL_ODEP)
 monodll_page.o: $(srcdir)/src/ribbon/page.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/ribbon/page.cpp
 
-monodll_ribbon_panel.o: $(srcdir)/src/ribbon/panel.cpp $(MONODLL_ODEP)
+monodll_panel.o: $(srcdir)/src/ribbon/panel.cpp $(MONODLL_ODEP)
 	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/ribbon/panel.cpp
 
 monodll_ribbon_toolbar.o: $(srcdir)/src/ribbon/toolbar.cpp $(MONODLL_ODEP)
@@ -17778,6 +17849,12 @@ monodll_sound_sdl.o: $(srcdir)/src/unix/sound_sdl.cpp $(MONODLL_ODEP)
 
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@monodll_gtk_window.o: $(srcdir)/src/gtk/window.cpp $(MONODLL_ODEP)
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/gtk/window.cpp
+
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@monodll_gtk_mimetype.o: $(srcdir)/src/gtk/mimetype.cpp $(MONODLL_ODEP)
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/gtk/mimetype.cpp
+
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@monodll_gtk_mimetype.o: $(srcdir)/src/gtk/mimetype.cpp $(MONODLL_ODEP)
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/gtk/mimetype.cpp
 
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@monodll_gtk_dcclient.o: $(srcdir)/src/gtk/dcclient.cpp $(MONODLL_ODEP)
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/gtk/dcclient.cpp
@@ -20390,7 +20467,7 @@ monodll_sound_sdl.o: $(srcdir)/src/unix/sound_sdl.cpp $(MONODLL_ODEP)
 @COND_PLATFORM_MACOSX_1_USE_GUI_1@	$(CXXC) -c -o $@ $(MONODLL_CXXFLAGS) $(srcdir)/src/html/chm.cpp
 
 monodll_version_rc.o: $(srcdir)/src/msw/version.rc $(MONODLL_ODEP)
-	$(WINDRES) -i$< -o$@    --define __WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p_67) $(__DEBUG_DEFINE_p_66)  $(__EXCEPTIONS_DEFINE_p_65) $(__RTTI_DEFINE_p_65) $(__THREAD_DEFINE_p_65)  --define WXBUILDING --define WXDLLNAME=$(WXDLLNAMEPREFIXGUI)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)$(WXCOMPILER)$(VENDORTAG)$(WXDLLVERSIONTAG) $(__RCDEFDIR_p) --include-dir $(top_srcdir)/include $(__INC_TIFF_BUILD_p_66) $(__INC_TIFF_p_66) $(__INC_JPEG_p_66) $(__INC_PNG_p_65) $(__INC_ZLIB_p_67) $(__INC_REGEX_p_65) $(__INC_EXPAT_p_65) --include-dir $(top_srcdir)/src/stc/scintilla/include --include-dir $(top_srcdir)/src/stc/scintilla/lexlib --include-dir $(top_srcdir)/src/stc/scintilla/src --define __WX__ --define SCI_LEXER --define LINK_LEXERS --define wxUSE_BASE=1 --define WXMAKINGDLL
+	$(WINDRES) -i$< -o$@    --define __WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p_67) $(__DEBUG_DEFINE_p_66)  $(__EXCEPTIONS_DEFINE_p_65) $(__RTTI_DEFINE_p_65) $(__THREAD_DEFINE_p_65)  --define WXBUILDING --define WXDLLNAME=$(WXDLLNAMEPREFIXGUI)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)$(WXCOMPILER)$(VENDORTAG)$(WXDLLVERSIONTAG) $(__RCDEFDIR_p) --include-dir $(top_srcdir)/include $(__INC_TIFF_BUILD_p_66) $(__INC_TIFF_p_66) $(__INC_JPEG_p_66) $(__INC_PNG_p_65) $(__INC_ZLIB_p_67) $(__INC_REGEX_p_65) $(__INC_EXPAT_p_65) --include-dir $(top_srcdir)/src/stc/scintilla/include --include-dir $(top_srcdir)/src/stc/scintilla/lexlib --include-dir $(top_srcdir)/src/stc/scintilla/src --define __WX__ --define SCI_LEXER --define NO_CXX11_REGEX --define LINK_LEXERS --define wxUSE_BASE=1 --define WXMAKINGDLL
 
 monolib_any.o: $(srcdir)/src/common/any.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/common/any.cpp
@@ -20653,6 +20730,9 @@ monolib_fswatchercmn.o: $(srcdir)/src/common/fswatchercmn.cpp $(MONOLIB_ODEP)
 monolib_fswatcherg.o: $(srcdir)/src/generic/fswatcherg.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/generic/fswatcherg.cpp
 
+monolib_common_secretstore.o: $(srcdir)/src/common/secretstore.cpp $(MONOLIB_ODEP)
+	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/common/secretstore.cpp
+
 monolib_unix_mimetype.o: $(srcdir)/src/unix/mimetype.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/unix/mimetype.cpp
 
@@ -20661,6 +20741,9 @@ monolib_fswatcher_inotify.o: $(srcdir)/src/unix/fswatcher_inotify.cpp $(MONOLIB_
 
 monolib_unix_stdpaths.o: $(srcdir)/src/unix/stdpaths.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/unix/stdpaths.cpp
+
+monolib_unix_secretstore.o: $(srcdir)/src/unix/secretstore.cpp $(MONOLIB_ODEP)
+	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/unix/secretstore.cpp
 
 monolib_basemsw.o: $(srcdir)/src/msw/basemsw.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/msw/basemsw.cpp
@@ -20719,6 +20802,9 @@ monolib_utilsexc.o: $(srcdir)/src/msw/utilsexc.cpp $(MONOLIB_ODEP)
 monolib_fswatcher.o: $(srcdir)/src/msw/fswatcher.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/msw/fswatcher.cpp
 
+monolib_msw_secretstore.o: $(srcdir)/src/msw/secretstore.cpp $(MONOLIB_ODEP)
+	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/msw/secretstore.cpp
+
 monolib_core_mimetype.o: $(srcdir)/src/osx/core/mimetype.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/osx/core/mimetype.cpp
 
@@ -20736,6 +20822,9 @@ monolib_utilsexc_base.o: $(srcdir)/src/osx/core/utilsexc_base.cpp $(MONOLIB_ODEP
 
 monolib_utils_base.o: $(srcdir)/src/osx/cocoa/utils_base.mm $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/utils_base.mm
+
+monolib_core_secretstore.o: $(srcdir)/src/osx/core/secretstore.cpp $(MONOLIB_ODEP)
+	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/osx/core/secretstore.cpp
 
 monolib_fswatcher_fsevents.o: $(srcdir)/src/osx/fswatcher_fsevents.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/osx/fswatcher_fsevents.cpp
@@ -21157,9 +21246,6 @@ monolib_access.o: $(srcdir)/src/msw/ole/access.cpp $(MONOLIB_ODEP)
 monolib_ownerdrw.o: $(srcdir)/src/msw/ownerdrw.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/msw/ownerdrw.cpp
 
-monolib_msw_panel.o: $(srcdir)/src/msw/panel.cpp $(MONOLIB_ODEP)
-	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/msw/panel.cpp
-
 monolib_progdlg.o: $(srcdir)/src/msw/progdlg.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/msw/progdlg.cpp
 
@@ -21219,6 +21305,9 @@ monolib_treectrl.o: $(srcdir)/src/msw/treectrl.cpp $(MONOLIB_ODEP)
 
 monolib_systhemectrl.o: $(srcdir)/src/msw/systhemectrl.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/msw/systhemectrl.cpp
+
+monolib_customdraw.o: $(srcdir)/src/msw/customdraw.cpp $(MONOLIB_ODEP)
+	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/msw/customdraw.cpp
 
 monolib_msw_checklst.o: $(srcdir)/src/msw/checklst.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/msw/checklst.cpp
@@ -21877,8 +21966,8 @@ monolib_tabmdi.o: $(srcdir)/src/aui/tabmdi.cpp $(MONOLIB_ODEP)
 monolib_tabart.o: $(srcdir)/src/aui/tabart.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/aui/tabart.cpp
 
-monolib_xh_auinotbk.o: $(srcdir)/src/xrc/xh_auinotbk.cpp $(MONOLIB_ODEP)
-	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/xrc/xh_auinotbk.cpp
+monolib_xh_aui.o: $(srcdir)/src/xrc/xh_aui.cpp $(MONOLIB_ODEP)
+	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/xrc/xh_aui.cpp
 
 monolib_xh_auitoolb.o: $(srcdir)/src/xrc/xh_auitoolb.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/xrc/xh_auitoolb.cpp
@@ -21940,7 +22029,7 @@ monolib_gallery.o: $(srcdir)/src/ribbon/gallery.cpp $(MONOLIB_ODEP)
 monolib_page.o: $(srcdir)/src/ribbon/page.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/ribbon/page.cpp
 
-monolib_ribbon_panel.o: $(srcdir)/src/ribbon/panel.cpp $(MONOLIB_ODEP)
+monolib_panel.o: $(srcdir)/src/ribbon/panel.cpp $(MONOLIB_ODEP)
 	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/ribbon/panel.cpp
 
 monolib_ribbon_toolbar.o: $(srcdir)/src/ribbon/toolbar.cpp $(MONOLIB_ODEP)
@@ -22608,6 +22697,12 @@ monolib_sound_sdl.o: $(srcdir)/src/unix/sound_sdl.cpp $(MONOLIB_ODEP)
 
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@monolib_gtk_window.o: $(srcdir)/src/gtk/window.cpp $(MONOLIB_ODEP)
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/gtk/window.cpp
+
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@monolib_gtk_mimetype.o: $(srcdir)/src/gtk/mimetype.cpp $(MONOLIB_ODEP)
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/gtk/mimetype.cpp
+
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@monolib_gtk_mimetype.o: $(srcdir)/src/gtk/mimetype.cpp $(MONOLIB_ODEP)
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/gtk/mimetype.cpp
 
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@monolib_gtk_dcclient.o: $(srcdir)/src/gtk/dcclient.cpp $(MONOLIB_ODEP)
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@	$(CXXC) -c -o $@ $(MONOLIB_CXXFLAGS) $(srcdir)/src/gtk/dcclient.cpp
@@ -25483,6 +25578,9 @@ basedll_fswatchercmn.o: $(srcdir)/src/common/fswatchercmn.cpp $(BASEDLL_ODEP)
 basedll_fswatcherg.o: $(srcdir)/src/generic/fswatcherg.cpp $(BASEDLL_ODEP)
 	$(CXXC) -c -o $@ $(BASEDLL_CXXFLAGS) $(srcdir)/src/generic/fswatcherg.cpp
 
+basedll_common_secretstore.o: $(srcdir)/src/common/secretstore.cpp $(BASEDLL_ODEP)
+	$(CXXC) -c -o $@ $(BASEDLL_CXXFLAGS) $(srcdir)/src/common/secretstore.cpp
+
 basedll_unix_mimetype.o: $(srcdir)/src/unix/mimetype.cpp $(BASEDLL_ODEP)
 	$(CXXC) -c -o $@ $(BASEDLL_CXXFLAGS) $(srcdir)/src/unix/mimetype.cpp
 
@@ -25491,6 +25589,9 @@ basedll_fswatcher_inotify.o: $(srcdir)/src/unix/fswatcher_inotify.cpp $(BASEDLL_
 
 basedll_unix_stdpaths.o: $(srcdir)/src/unix/stdpaths.cpp $(BASEDLL_ODEP)
 	$(CXXC) -c -o $@ $(BASEDLL_CXXFLAGS) $(srcdir)/src/unix/stdpaths.cpp
+
+basedll_unix_secretstore.o: $(srcdir)/src/unix/secretstore.cpp $(BASEDLL_ODEP)
+	$(CXXC) -c -o $@ $(BASEDLL_CXXFLAGS) $(srcdir)/src/unix/secretstore.cpp
 
 basedll_basemsw.o: $(srcdir)/src/msw/basemsw.cpp $(BASEDLL_ODEP)
 	$(CXXC) -c -o $@ $(BASEDLL_CXXFLAGS) $(srcdir)/src/msw/basemsw.cpp
@@ -25549,6 +25650,9 @@ basedll_utilsexc.o: $(srcdir)/src/msw/utilsexc.cpp $(BASEDLL_ODEP)
 basedll_fswatcher.o: $(srcdir)/src/msw/fswatcher.cpp $(BASEDLL_ODEP)
 	$(CXXC) -c -o $@ $(BASEDLL_CXXFLAGS) $(srcdir)/src/msw/fswatcher.cpp
 
+basedll_msw_secretstore.o: $(srcdir)/src/msw/secretstore.cpp $(BASEDLL_ODEP)
+	$(CXXC) -c -o $@ $(BASEDLL_CXXFLAGS) $(srcdir)/src/msw/secretstore.cpp
+
 basedll_core_mimetype.o: $(srcdir)/src/osx/core/mimetype.cpp $(BASEDLL_ODEP)
 	$(CXXC) -c -o $@ $(BASEDLL_CXXFLAGS) $(srcdir)/src/osx/core/mimetype.cpp
 
@@ -25566,6 +25670,9 @@ basedll_utilsexc_base.o: $(srcdir)/src/osx/core/utilsexc_base.cpp $(BASEDLL_ODEP
 
 basedll_utils_base.o: $(srcdir)/src/osx/cocoa/utils_base.mm $(BASEDLL_ODEP)
 	$(CXXC) -c -o $@ $(BASEDLL_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/utils_base.mm
+
+basedll_core_secretstore.o: $(srcdir)/src/osx/core/secretstore.cpp $(BASEDLL_ODEP)
+	$(CXXC) -c -o $@ $(BASEDLL_CXXFLAGS) $(srcdir)/src/osx/core/secretstore.cpp
 
 basedll_fswatcher_fsevents.o: $(srcdir)/src/osx/fswatcher_fsevents.cpp $(BASEDLL_ODEP)
 	$(CXXC) -c -o $@ $(BASEDLL_CXXFLAGS) $(srcdir)/src/osx/fswatcher_fsevents.cpp
@@ -25948,6 +26055,9 @@ baselib_fswatchercmn.o: $(srcdir)/src/common/fswatchercmn.cpp $(BASELIB_ODEP)
 baselib_fswatcherg.o: $(srcdir)/src/generic/fswatcherg.cpp $(BASELIB_ODEP)
 	$(CXXC) -c -o $@ $(BASELIB_CXXFLAGS) $(srcdir)/src/generic/fswatcherg.cpp
 
+baselib_common_secretstore.o: $(srcdir)/src/common/secretstore.cpp $(BASELIB_ODEP)
+	$(CXXC) -c -o $@ $(BASELIB_CXXFLAGS) $(srcdir)/src/common/secretstore.cpp
+
 baselib_unix_mimetype.o: $(srcdir)/src/unix/mimetype.cpp $(BASELIB_ODEP)
 	$(CXXC) -c -o $@ $(BASELIB_CXXFLAGS) $(srcdir)/src/unix/mimetype.cpp
 
@@ -25956,6 +26066,9 @@ baselib_fswatcher_inotify.o: $(srcdir)/src/unix/fswatcher_inotify.cpp $(BASELIB_
 
 baselib_unix_stdpaths.o: $(srcdir)/src/unix/stdpaths.cpp $(BASELIB_ODEP)
 	$(CXXC) -c -o $@ $(BASELIB_CXXFLAGS) $(srcdir)/src/unix/stdpaths.cpp
+
+baselib_unix_secretstore.o: $(srcdir)/src/unix/secretstore.cpp $(BASELIB_ODEP)
+	$(CXXC) -c -o $@ $(BASELIB_CXXFLAGS) $(srcdir)/src/unix/secretstore.cpp
 
 baselib_basemsw.o: $(srcdir)/src/msw/basemsw.cpp $(BASELIB_ODEP)
 	$(CXXC) -c -o $@ $(BASELIB_CXXFLAGS) $(srcdir)/src/msw/basemsw.cpp
@@ -26014,6 +26127,9 @@ baselib_utilsexc.o: $(srcdir)/src/msw/utilsexc.cpp $(BASELIB_ODEP)
 baselib_fswatcher.o: $(srcdir)/src/msw/fswatcher.cpp $(BASELIB_ODEP)
 	$(CXXC) -c -o $@ $(BASELIB_CXXFLAGS) $(srcdir)/src/msw/fswatcher.cpp
 
+baselib_msw_secretstore.o: $(srcdir)/src/msw/secretstore.cpp $(BASELIB_ODEP)
+	$(CXXC) -c -o $@ $(BASELIB_CXXFLAGS) $(srcdir)/src/msw/secretstore.cpp
+
 baselib_core_mimetype.o: $(srcdir)/src/osx/core/mimetype.cpp $(BASELIB_ODEP)
 	$(CXXC) -c -o $@ $(BASELIB_CXXFLAGS) $(srcdir)/src/osx/core/mimetype.cpp
 
@@ -26031,6 +26147,9 @@ baselib_utilsexc_base.o: $(srcdir)/src/osx/core/utilsexc_base.cpp $(BASELIB_ODEP
 
 baselib_utils_base.o: $(srcdir)/src/osx/cocoa/utils_base.mm $(BASELIB_ODEP)
 	$(CXXC) -c -o $@ $(BASELIB_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/utils_base.mm
+
+baselib_core_secretstore.o: $(srcdir)/src/osx/core/secretstore.cpp $(BASELIB_ODEP)
+	$(CXXC) -c -o $@ $(BASELIB_CXXFLAGS) $(srcdir)/src/osx/core/secretstore.cpp
 
 baselib_fswatcher_fsevents.o: $(srcdir)/src/osx/fswatcher_fsevents.cpp $(BASELIB_ODEP)
 	$(CXXC) -c -o $@ $(BASELIB_CXXFLAGS) $(srcdir)/src/osx/fswatcher_fsevents.cpp
@@ -26638,9 +26757,6 @@ coredll_access.o: $(srcdir)/src/msw/ole/access.cpp $(COREDLL_ODEP)
 coredll_ownerdrw.o: $(srcdir)/src/msw/ownerdrw.cpp $(COREDLL_ODEP)
 	$(CXXC) -c -o $@ $(COREDLL_CXXFLAGS) $(srcdir)/src/msw/ownerdrw.cpp
 
-coredll_panel.o: $(srcdir)/src/msw/panel.cpp $(COREDLL_ODEP)
-	$(CXXC) -c -o $@ $(COREDLL_CXXFLAGS) $(srcdir)/src/msw/panel.cpp
-
 coredll_progdlg.o: $(srcdir)/src/msw/progdlg.cpp $(COREDLL_ODEP)
 	$(CXXC) -c -o $@ $(COREDLL_CXXFLAGS) $(srcdir)/src/msw/progdlg.cpp
 
@@ -26700,6 +26816,9 @@ coredll_treectrl.o: $(srcdir)/src/msw/treectrl.cpp $(COREDLL_ODEP)
 
 coredll_systhemectrl.o: $(srcdir)/src/msw/systhemectrl.cpp $(COREDLL_ODEP)
 	$(CXXC) -c -o $@ $(COREDLL_CXXFLAGS) $(srcdir)/src/msw/systhemectrl.cpp
+
+coredll_customdraw.o: $(srcdir)/src/msw/customdraw.cpp $(COREDLL_ODEP)
+	$(CXXC) -c -o $@ $(COREDLL_CXXFLAGS) $(srcdir)/src/msw/customdraw.cpp
 
 coredll_msw_checklst.o: $(srcdir)/src/msw/checklst.cpp $(COREDLL_ODEP)
 	$(CXXC) -c -o $@ $(COREDLL_CXXFLAGS) $(srcdir)/src/msw/checklst.cpp
@@ -27498,6 +27617,12 @@ coredll_win32.o: $(srcdir)/src/univ/themes/win32.cpp $(COREDLL_ODEP)
 
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@coredll_gtk_window.o: $(srcdir)/src/gtk/window.cpp $(COREDLL_ODEP)
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@	$(CXXC) -c -o $@ $(COREDLL_CXXFLAGS) $(srcdir)/src/gtk/window.cpp
+
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@coredll_mimetype.o: $(srcdir)/src/gtk/mimetype.cpp $(COREDLL_ODEP)
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@	$(CXXC) -c -o $@ $(COREDLL_CXXFLAGS) $(srcdir)/src/gtk/mimetype.cpp
+
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@coredll_mimetype.o: $(srcdir)/src/gtk/mimetype.cpp $(COREDLL_ODEP)
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@	$(CXXC) -c -o $@ $(COREDLL_CXXFLAGS) $(srcdir)/src/gtk/mimetype.cpp
 
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@coredll_gtk_dcclient.o: $(srcdir)/src/gtk/dcclient.cpp $(COREDLL_ODEP)
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@	$(CXXC) -c -o $@ $(COREDLL_CXXFLAGS) $(srcdir)/src/gtk/dcclient.cpp
@@ -30025,9 +30150,6 @@ corelib_access.o: $(srcdir)/src/msw/ole/access.cpp $(CORELIB_ODEP)
 corelib_ownerdrw.o: $(srcdir)/src/msw/ownerdrw.cpp $(CORELIB_ODEP)
 	$(CXXC) -c -o $@ $(CORELIB_CXXFLAGS) $(srcdir)/src/msw/ownerdrw.cpp
 
-corelib_panel.o: $(srcdir)/src/msw/panel.cpp $(CORELIB_ODEP)
-	$(CXXC) -c -o $@ $(CORELIB_CXXFLAGS) $(srcdir)/src/msw/panel.cpp
-
 corelib_progdlg.o: $(srcdir)/src/msw/progdlg.cpp $(CORELIB_ODEP)
 	$(CXXC) -c -o $@ $(CORELIB_CXXFLAGS) $(srcdir)/src/msw/progdlg.cpp
 
@@ -30087,6 +30209,9 @@ corelib_treectrl.o: $(srcdir)/src/msw/treectrl.cpp $(CORELIB_ODEP)
 
 corelib_systhemectrl.o: $(srcdir)/src/msw/systhemectrl.cpp $(CORELIB_ODEP)
 	$(CXXC) -c -o $@ $(CORELIB_CXXFLAGS) $(srcdir)/src/msw/systhemectrl.cpp
+
+corelib_customdraw.o: $(srcdir)/src/msw/customdraw.cpp $(CORELIB_ODEP)
+	$(CXXC) -c -o $@ $(CORELIB_CXXFLAGS) $(srcdir)/src/msw/customdraw.cpp
 
 corelib_msw_checklst.o: $(srcdir)/src/msw/checklst.cpp $(CORELIB_ODEP)
 	$(CXXC) -c -o $@ $(CORELIB_CXXFLAGS) $(srcdir)/src/msw/checklst.cpp
@@ -30885,6 +31010,12 @@ corelib_win32.o: $(srcdir)/src/univ/themes/win32.cpp $(CORELIB_ODEP)
 
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@corelib_gtk_window.o: $(srcdir)/src/gtk/window.cpp $(CORELIB_ODEP)
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@	$(CXXC) -c -o $@ $(CORELIB_CXXFLAGS) $(srcdir)/src/gtk/window.cpp
+
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@corelib_mimetype.o: $(srcdir)/src/gtk/mimetype.cpp $(CORELIB_ODEP)
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@	$(CXXC) -c -o $@ $(CORELIB_CXXFLAGS) $(srcdir)/src/gtk/mimetype.cpp
+
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@corelib_mimetype.o: $(srcdir)/src/gtk/mimetype.cpp $(CORELIB_ODEP)
+@COND_TOOLKIT_GTK_TOOLKIT_VERSION_3_USE_GUI_1@	$(CXXC) -c -o $@ $(CORELIB_CXXFLAGS) $(srcdir)/src/gtk/mimetype.cpp
 
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@corelib_gtk_dcclient.o: $(srcdir)/src/gtk/dcclient.cpp $(CORELIB_ODEP)
 @COND_TOOLKIT_GTK_TOOLKIT_VERSION_2_USE_GUI_1@	$(CXXC) -c -o $@ $(CORELIB_CXXFLAGS) $(srcdir)/src/gtk/dcclient.cpp
@@ -34705,8 +34836,8 @@ auidll_tabmdi.o: $(srcdir)/src/aui/tabmdi.cpp $(AUIDLL_ODEP)
 auidll_tabart.o: $(srcdir)/src/aui/tabart.cpp $(AUIDLL_ODEP)
 	$(CXXC) -c -o $@ $(AUIDLL_CXXFLAGS) $(srcdir)/src/aui/tabart.cpp
 
-auidll_xh_auinotbk.o: $(srcdir)/src/xrc/xh_auinotbk.cpp $(AUIDLL_ODEP)
-	$(CXXC) -c -o $@ $(AUIDLL_CXXFLAGS) $(srcdir)/src/xrc/xh_auinotbk.cpp
+auidll_xh_aui.o: $(srcdir)/src/xrc/xh_aui.cpp $(AUIDLL_ODEP)
+	$(CXXC) -c -o $@ $(AUIDLL_CXXFLAGS) $(srcdir)/src/xrc/xh_aui.cpp
 
 auidll_xh_auitoolb.o: $(srcdir)/src/xrc/xh_auitoolb.cpp $(AUIDLL_ODEP)
 	$(CXXC) -c -o $@ $(AUIDLL_CXXFLAGS) $(srcdir)/src/xrc/xh_auitoolb.cpp
@@ -34741,8 +34872,8 @@ auilib_tabmdi.o: $(srcdir)/src/aui/tabmdi.cpp $(AUILIB_ODEP)
 auilib_tabart.o: $(srcdir)/src/aui/tabart.cpp $(AUILIB_ODEP)
 	$(CXXC) -c -o $@ $(AUILIB_CXXFLAGS) $(srcdir)/src/aui/tabart.cpp
 
-auilib_xh_auinotbk.o: $(srcdir)/src/xrc/xh_auinotbk.cpp $(AUILIB_ODEP)
-	$(CXXC) -c -o $@ $(AUILIB_CXXFLAGS) $(srcdir)/src/xrc/xh_auinotbk.cpp
+auilib_xh_aui.o: $(srcdir)/src/xrc/xh_aui.cpp $(AUILIB_ODEP)
+	$(CXXC) -c -o $@ $(AUILIB_CXXFLAGS) $(srcdir)/src/xrc/xh_aui.cpp
 
 auilib_xh_auitoolb.o: $(srcdir)/src/xrc/xh_auitoolb.cpp $(AUILIB_ODEP)
 	$(CXXC) -c -o $@ $(AUILIB_CXXFLAGS) $(srcdir)/src/xrc/xh_auitoolb.cpp
@@ -34946,7 +35077,7 @@ richtextlib_xh_richtext.o: $(srcdir)/src/xrc/xh_richtext.cpp $(RICHTEXTLIB_ODEP)
 	$(CXXC) -c -o $@ $(RICHTEXTLIB_CXXFLAGS) $(srcdir)/src/xrc/xh_richtext.cpp
 
 stcdll_version_rc.o: $(srcdir)/src/msw/version.rc $(STCDLL_ODEP)
-	$(WINDRES) -i$< -o$@    --define __WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p_67) $(__DEBUG_DEFINE_p_66)  $(__EXCEPTIONS_DEFINE_p_65) $(__RTTI_DEFINE_p_65) $(__THREAD_DEFINE_p_65)  --define WXBUILDING --define WXDLLNAME=$(WXDLLNAMEPREFIXGUI)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_stc$(WXCOMPILER)$(VENDORTAG)$(WXDLLVERSIONTAG) $(__RCDEFDIR_p) --include-dir $(top_srcdir)/include $(__INC_TIFF_BUILD_p_66) $(__INC_TIFF_p_66) $(__INC_JPEG_p_66) $(__INC_PNG_p_65) $(__INC_ZLIB_p_67) $(__INC_REGEX_p_65) $(__INC_EXPAT_p_65) --include-dir $(top_srcdir)/src/stc/scintilla/include --include-dir $(top_srcdir)/src/stc/scintilla/lexlib --include-dir $(top_srcdir)/src/stc/scintilla/src --define __WX__ --define SCI_LEXER --define LINK_LEXERS --define WXUSINGDLL --define WXMAKINGDLL_STC
+	$(WINDRES) -i$< -o$@    --define __WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p_67) $(__DEBUG_DEFINE_p_66)  $(__EXCEPTIONS_DEFINE_p_65) $(__RTTI_DEFINE_p_65) $(__THREAD_DEFINE_p_65)  --define WXBUILDING --define WXDLLNAME=$(WXDLLNAMEPREFIXGUI)$(WXUNICODEFLAG)$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_stc$(WXCOMPILER)$(VENDORTAG)$(WXDLLVERSIONTAG) $(__RCDEFDIR_p) --include-dir $(top_srcdir)/include $(__INC_TIFF_BUILD_p_66) $(__INC_TIFF_p_66) $(__INC_JPEG_p_66) $(__INC_PNG_p_65) $(__INC_ZLIB_p_67) $(__INC_REGEX_p_65) $(__INC_EXPAT_p_65) --include-dir $(top_srcdir)/src/stc/scintilla/include --include-dir $(top_srcdir)/src/stc/scintilla/lexlib --include-dir $(top_srcdir)/src/stc/scintilla/src --define __WX__ --define SCI_LEXER --define NO_CXX11_REGEX --define LINK_LEXERS --define WXUSINGDLL --define WXMAKINGDLL_STC
 
 stcdll_stc.o: $(srcdir)/src/stc/stc.cpp $(STCDLL_ODEP)
 	$(CXXC) -c -o $@ $(STCDLL_CXXFLAGS) $(srcdir)/src/stc/stc.cpp

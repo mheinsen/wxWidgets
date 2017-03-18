@@ -2,7 +2,7 @@
 #                                                                            *
 # Make file for VMS                                                          *
 # Author : J.Jansen (joukj@hrem.nano.tudelft.nl)                             *
-# Date : 25 February 2016                                                    *
+# Date : 21 Februsary 2017                                                   *
 #                                                                            *
 #*****************************************************************************
 .first
@@ -226,7 +226,8 @@ OBJECTS3=listctrlcmn.obj,socketiohandler.obj,fdiodispatcher.obj,\
 		valnum.obj,numformatter.obj,markupparser.obj,\
 		affinematrix2d.obj,richtooltipcmn.obj,persist.obj,time.obj,\
 		textmeasurecmn.obj,modalhook.obj,threadinfo.obj,\
-		addremovectrl.obj,notifmsgcmn.obj
+		addremovectrl.obj,notifmsgcmn.obj,graphcmn.obj,dcsvg.obj,\
+		dcgraph.obj
 
 OBJECTS_MOTIF=radiocmn.obj,combocmn.obj
 
@@ -431,7 +432,7 @@ SOURCES = \
 		gridcmn.cpp,odcombocmn.cpp,spinbtncmn.cpp,scrolbarcmn.cpp,\
 		colourdata.cpp,fontdata.cpp affinematrix2d.cpp\
 		richtooltipcmn.cpp persist.cpp time.cpp textmeasurecmn.cpp \
-		modalhook.cpp
+		modalhook.cpp graphcmn.cpp dcsvg.cpp dcgraph.cpp
 
 all : $(SOURCES)
 	$(MMS)$(MMSQUALIFIERS) $(OBJECTS)
@@ -638,7 +639,9 @@ wincmn.obj : wincmn.cpp
 wxcrt.obj : wxcrt.cpp
 xpmdecod.obj : xpmdecod.cpp
 zipstrm.obj : zipstrm.cpp
+	cxx$(CXX_DEFINE)/warn=disable=(MACROREDEF)/obj=zipstrm.obj zipstrm.cpp
 zstream.obj : zstream.cpp
+	cxx$(CXX_DEFINE)/warn=disable=(MACROREDEF)/obj=zstream.obj zstream.cpp
 accesscmn.obj : accesscmn.cpp
 dndcmn.obj : dndcmn.cpp
 dpycmn.obj : dpycmn.cpp
@@ -686,6 +689,8 @@ arcall.obj : arcall.cpp
 arcfind.obj : arcfind.cpp
 tarstrm.obj : tarstrm.cpp
 datavcmn.obj : datavcmn.cpp
+	cxx$(CXX_DEFINE)/warn=disable=(INTSIGNCHANGE)/obj=datavcmn.obj \
+	datavcmn.cpp
 debugrpt.obj : debugrpt.cpp
 translation.obj : translation.cpp
 languageinfo.obj : languageinfo.cpp
@@ -722,3 +727,6 @@ modalhook.obj : modalhook.cpp
 threadinfo.obj : threadinfo.cpp
 addremovectrl.obj : addremovectrl.cpp
 notifmsgcmn.obj : notifmsgcmn.cpp
+graphcmn.obj : graphcmn.cpp
+dcsvg.obj : dcsvg.cpp
+dcgraph.obj : dcgraph.cpp

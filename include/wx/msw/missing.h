@@ -198,6 +198,9 @@
 #ifndef HDS_FLAT
     #define HDS_FLAT 0x0200
 #endif
+#ifndef HDS_NOSIZING
+    #define HDS_NOSIZING 0x0800
+#endif
 
 #ifndef HDF_SORTUP
     #define HDF_SORTUP   0x0400
@@ -219,10 +222,6 @@
 #if !defined(TB_SETDISABLEDIMAGELIST)
     #define TB_SETDISABLEDIMAGELIST (WM_USER + 54)
 #endif // !defined(TB_SETDISABLEDIMAGELIST)
-
-#ifndef CFM_BACKCOLOR
-    #define CFM_BACKCOLOR 0x04000000
-#endif
 
 #ifndef HANGUL_CHARSET
     #define HANGUL_CHARSET 129

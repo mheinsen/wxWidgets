@@ -1214,10 +1214,7 @@ wxSize wxPropertyGrid::DoGetBestSize() const
         width += m_pState->GetColumnFitWidth(dc, m_pState->DoGetRoot(), i, true);
     }
 
-    const wxSize sz = wxSize(width, lineHeight*numLines + 40);
-
-    CacheBestSize(sz);
-    return sz;
+    return wxSize(width, lineHeight*numLines + 40);
 }
 
 // -----------------------------------------------------------------------
@@ -1736,7 +1733,7 @@ wxPoint wxPropertyGrid::GetGoodEditorDialogPosition( wxPGProperty* p,
 
 // -----------------------------------------------------------------------
 
-wxString& wxPropertyGrid::ExpandEscapeSequences( wxString& dst_str, wxString& src_str )
+wxString& wxPropertyGrid::ExpandEscapeSequences( wxString& dst_str, const wxString& src_str )
 {
     dst_str.clear();
 
@@ -1794,7 +1791,7 @@ wxString& wxPropertyGrid::ExpandEscapeSequences( wxString& dst_str, wxString& sr
 
 // -----------------------------------------------------------------------
 
-wxString& wxPropertyGrid::CreateEscapeSequences( wxString& dst_str, wxString& src_str )
+wxString& wxPropertyGrid::CreateEscapeSequences( wxString& dst_str, const wxString& src_str )
 {
     dst_str.clear();
 
@@ -4677,8 +4674,8 @@ void wxPropertyGrid::OnResize( wxSizeEvent& event )
         }
         else
         {
-            int w = m_doubleBuffer->GetWidth();
-            int h = m_doubleBuffer->GetHeight();
+            int w = m_doubleBuffer->GetScaledWidth();
+            int h = m_doubleBuffer->GetScaledHeight();
 
             // Double buffer must be large enough
             if ( w < width || h < (height+dblh) )
@@ -5972,7 +5969,9 @@ bool wxPropertyGrid::IsEditorFocused() const
     wxWindow* focus = wxWindow::FindFocus();
 
     if ( focus == m_wndEditor || focus == m_wndEditor2 ||
-         focus == GetEditorControl() )
+         focus == GetEditorControl() ||
+         // In case a combobox text control is focused
+         (focus && focus->GetParent() && (focus->GetParent() == m_wndEditor)) )
          return true;
 
     return false;

@@ -114,6 +114,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     $(BASE_UNIX_AND_DARWIN_NOTWXMAC_SRC)
     src/unix/fswatcher_inotify.cpp
     src/unix/stdpaths.cpp
+    src/unix/secretstore.cpp
 </set>
 <set var="BASE_UNIX_HDR" hints="files">
     $(BASE_UNIX_AND_DARWIN_NOTWXMAC_HDR)
@@ -144,6 +145,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     src/msw/utils.cpp
     src/msw/utilsexc.cpp
     src/msw/fswatcher.cpp
+    src/msw/secretstore.cpp
 </set>
 <set var="BASE_AND_GUI_WIN32_SRC" hints="files">
     src/msw/main.cpp
@@ -167,6 +169,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     wx/msw/stackwalk.h
     wx/msw/stdpaths.h
     wx/msw/winundef.h
+    wx/msw/winver.h
     wx/msw/wrapcctl.h
     wx/msw/wrapcdlg.h
     wx/msw/wrapwin.h
@@ -184,6 +187,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     src/osx/core/strconv_cf.cpp
     src/osx/core/utilsexc_base.cpp
     src/osx/cocoa/utils_base.mm
+    src/osx/core/secretstore.cpp
 </set>
 <set var="BASE_COREFOUNDATION_HDR" hints="files">
     wx/osx/core/cfdataref.h
@@ -541,6 +545,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     src/common/zstream.cpp
     src/common/fswatchercmn.cpp
     src/generic/fswatcherg.cpp
+    src/common/secretstore.cpp
 </set>
 <set var="BASE_AND_GUI_CMN_SRC" hints="files">
     src/common/event.cpp
@@ -712,6 +717,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     wx/meta/removeref.h
     wx/fswatcher.h
     wx/generic/fswatcher.h
+    wx/secretstore.h
 </set>
 
 
@@ -1181,6 +1187,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     wx/systhemectrl.h
     wx/collheaderctrl.h
     wx/generic/collheaderctrl.h
+    wx/itemattr.h
 </set>
 
 <!-- ====================================================================== -->
@@ -1286,6 +1293,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     src/gtk/utilsgtk.cpp
     src/gtk/win_gtk.cpp
     src/gtk/window.cpp
+    src/gtk/mimetype.cpp
 </set>
 <set var="GTK2_LOWLEVEL_SRC" hints="files">
     $(GTK_LOWLEVEL_SRC)
@@ -1320,6 +1328,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     wx/gtk/tooltip.h
     wx/gtk/toplevel.h
     wx/gtk/window.h
+    wx/gtk/mimetype.h
 </set>
 <set var="GTK_SRC" hints="files">
     <!-- Generic implementations used by wxGTK: -->
@@ -1961,7 +1970,6 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     src/msw/notebook.cpp
     src/msw/ole/access.cpp
     src/msw/ownerdrw.cpp
-    src/msw/panel.cpp
     src/msw/progdlg.cpp
     src/msw/radiobox.cpp
     src/msw/radiobut.cpp
@@ -1982,6 +1990,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     src/msw/tglbtn.cpp
     src/msw/treectrl.cpp
     src/msw/systhemectrl.cpp
+    src/msw/customdraw.cpp
 </set>
 <set var="MSW_HDR" hints="files">
     wx/generic/clrpickerg.h
@@ -3384,7 +3393,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     src/aui/auibar.cpp
     src/aui/tabmdi.cpp
     src/aui/tabart.cpp
-    src/xrc/xh_auinotbk.cpp
+    src/xrc/xh_aui.cpp
     src/xrc/xh_auitoolb.cpp
 </set>
 <set var="AUI_SRC" hints="files">
@@ -3401,7 +3410,7 @@ IMPORTANT: please read docs/tech/tn0016.txt before modifying this file!
     wx/aui/tabmdi.h
     wx/aui/aui.h
     wx/aui/tabart.h
-    wx/xrc/xh_auinotbk.h
+    wx/xrc/xh_aui.h
     wx/xrc/xh_auitoolb.h
 </set>
 <set var="AUI_HDR" hints="files">

@@ -71,7 +71,24 @@ NSView* GetFocusedViewInWindow( NSWindow* keyWindow )
 
 WXWidget wxWidgetImpl::FindFocus()
 {
-    return GetFocusedViewInWindow( [NSApp keyWindow] );;
+    NSWindow *key = [NSApp keyWindow];
+    if ( key == nil )
+    {
+        // Application's keyWindow property may still not be updated and be
+        // nil when windowDidBecomeKey: is called and even if the
+        // just-activated's window isKeyWindow already returns YES. To get
+        // accurate information about where the focus is at all times, we have
+        // to explicitly check all application windos as well:
+        for ( NSWindow *w in [NSApp windows] )
+        {
+            if ( [w isKeyWindow] )
+            {
+                key = w;
+                break;
+            }
+        }
+    }
+    return key ? GetFocusedViewInWindow(key) : nil;
 }
 
 wxWidgetImpl* wxWidgetImpl::FindBestFromWXWidget(WXWidget control)
@@ -985,7 +1002,9 @@ void wxOSX_mouseEvent(NSView* self, SEL _cmd, NSEvent *event)
     if (impl == NULL)
         return;
 
-    impl->mouseEvent(event, self, _cmd);
+    // We shouldn't let disabled windows get mouse events.
+    if (impl->GetWXPeer()->IsEnabled())
+        impl->mouseEvent(event, self, _cmd);
 }
 
 void wxOSX_cursorUpdate(NSView* self, SEL _cmd, NSEvent *event)
@@ -2044,7 +2063,7 @@ wxWidgetCocoaImpl::ShowViewOrWindowWithEffect(wxWindow *win,
     {
         // what is a good default duration? Windows uses 200ms, Web frameworks
         // use anything from 250ms to 1s... choose something in the middle
-        timeout = 500;
+        timeout = 200;
     }
 
     [anim setDuration:timeout/1000.];   // duration is in seconds here
@@ -2109,19 +2128,12 @@ bool wxWidgetCocoaImpl::ShowWithEffect(bool show,
     return ShowViewOrWindowWithEffect(m_wxPeer, show, effect, timeout);
 }
 
-/* note that the drawing order between siblings is not defined under 10.4 */
-/* only starting from 10.5 the subview order is respected */
-
-/* NSComparisonResult is typedef'd as an enum pre-Leopard but typedef'd as
- * NSInteger post-Leopard.  Pre-Leopard the Cocoa toolkit expects a function
- * returning int and not NSComparisonResult.  Post-Leopard the Cocoa toolkit
- * expects a function returning the new non-enum NSComparsionResult.
- * Hence we create a typedef named CocoaWindowCompareFunctionResult.
- */
-#if defined(NSINTEGER_DEFINED)
-typedef NSComparisonResult CocoaWindowCompareFunctionResult;
+// To avoid warnings about incompatible pointer types with Xcode 7, we need to
+// constrain the comparison function arguments instead of just using "id".
+#if __has_feature(objc_kindof)
+typedef __kindof NSView* KindOfView;
 #else
-typedef int CocoaWindowCompareFunctionResult;
+typedef id KindOfView;
 #endif
 
 class CocoaWindowCompareContext
@@ -2135,19 +2147,20 @@ public:
         // Cocoa sorts subviews in-place.. make a copy
         m_subviews = [subviews copy];
     }
-    
+
     ~CocoaWindowCompareContext()
     {   // release the copy
         [m_subviews release];
     }
     NSView* target()
     {   return m_target; }
-    
+
     NSArray* subviews()
     {   return m_subviews; }
-    
+
     /* Helper function that returns the comparison based off of the original ordering */
-    CocoaWindowCompareFunctionResult CompareUsingOriginalOrdering(id first, id second)
+    NSComparisonResult CompareUsingOriginalOrdering(KindOfView first,
+            KindOfView second)
     {
         NSUInteger firstI = [m_subviews indexOfObjectIdenticalTo:first];
         NSUInteger secondI = [m_subviews indexOfObjectIdenticalTo:second];
@@ -2157,14 +2170,14 @@ public:
         // sortSubviewsUsingFunction:context:.  Thus we don't bother checking.  Particularly because
         // that case should never occur anyway because that would imply a multi-threaded GUI call
         // which is a big no-no with Cocoa.
-		
+
         // Subviews are ordered from back to front meaning one that is already lower will have an lower index.
         NSComparisonResult result = (firstI < secondI)
-		?   NSOrderedAscending /* -1 */
-		:   (firstI > secondI)
-		?   NSOrderedDescending /* 1 */
-		:   NSOrderedSame /* 0 */;
-		
+        ?   NSOrderedAscending /* -1 */
+        :   (firstI > secondI)
+        ?   NSOrderedDescending /* 1 */
+        :   NSOrderedSame /* 0 */;
+
         return result;
     }
 private:
@@ -2178,7 +2191,7 @@ private:
  * the target view is always higher than every other view.  When comparing two views neither of
  * which is the target, it returns the correct response based on the original ordering
  */
-static CocoaWindowCompareFunctionResult CocoaRaiseWindowCompareFunction(id first, id second, void *ctx)
+static NSComparisonResult CocoaRaiseWindowCompareFunction(KindOfView first, KindOfView second, void *ctx)
 {
     CocoaWindowCompareContext *compareContext = (CocoaWindowCompareContext*)ctx;
     // first should be ordered higher
@@ -2192,22 +2205,21 @@ static CocoaWindowCompareFunctionResult CocoaRaiseWindowCompareFunction(id first
 
 void wxWidgetCocoaImpl::Raise()
 {
-	NSView* nsview = m_osxView;
-	
+    NSView* nsview = m_osxView;
+
     NSView *superview = [nsview superview];
     CocoaWindowCompareContext compareContext(nsview, [superview subviews]);
-	
-    [superview sortSubviewsUsingFunction:
-	 CocoaRaiseWindowCompareFunction
-								 context: &compareContext];
-	
+
+    [superview sortSubviewsUsingFunction: CocoaRaiseWindowCompareFunction
+                                 context: &compareContext];
+
 }
 
 /* Causes Cocoa to lower the target view to the bottom of the Z-Order by telling the sort function that
  * the target view is always lower than every other view.  When comparing two views neither of
  * which is the target, it returns the correct response based on the original ordering
  */
-static CocoaWindowCompareFunctionResult CocoaLowerWindowCompareFunction(id first, id second, void *ctx)
+static NSComparisonResult CocoaLowerWindowCompareFunction(KindOfView first, KindOfView second, void *ctx)
 {
     CocoaWindowCompareContext *compareContext = (CocoaWindowCompareContext*)ctx;
     // first should be ordered lower
@@ -2221,14 +2233,13 @@ static CocoaWindowCompareFunctionResult CocoaLowerWindowCompareFunction(id first
 
 void wxWidgetCocoaImpl::Lower()
 {
-	NSView* nsview = m_osxView;
-	
+    NSView* nsview = m_osxView;
+
     NSView *superview = [nsview superview];
     CocoaWindowCompareContext compareContext(nsview, [superview subviews]);
-	
-    [superview sortSubviewsUsingFunction:
-	 CocoaLowerWindowCompareFunction
-								 context: &compareContext];
+
+    [superview sortSubviewsUsingFunction: CocoaLowerWindowCompareFunction
+                                 context: &compareContext];
 }
 
 void wxWidgetCocoaImpl::ScrollRect( const wxRect *WXUNUSED(rect), int WXUNUSED(dx), int WXUNUSED(dy) )
@@ -2336,18 +2347,28 @@ bool wxWidgetCocoaImpl::GetNeedsDisplay() const
 
 bool wxWidgetCocoaImpl::CanFocus() const
 {
-    return [m_osxView canBecomeKeyView] == YES;
+    NSView* targetView = m_osxView;
+    if ( [m_osxView isKindOfClass:[NSScrollView class] ] )
+        targetView = [(NSScrollView*) m_osxView documentView];
+    return [targetView canBecomeKeyView] == YES;
 }
 
 bool wxWidgetCocoaImpl::HasFocus() const
 {
-    return ( FindFocus() == m_osxView );
+    NSView* targetView = m_osxView;
+    if ( [m_osxView isKindOfClass:[NSScrollView class] ] )
+        targetView = [(NSScrollView*) m_osxView documentView];
+    return ( FindFocus() == targetView );
 }
 
 bool wxWidgetCocoaImpl::SetFocus()
 {
     if ( !CanFocus() )
         return false;
+
+    NSView* targetView = m_osxView;
+    if ( [m_osxView isKindOfClass:[NSScrollView class] ] )
+        targetView = [(NSScrollView*) m_osxView documentView];
 
     // TODO remove if no issues arise: should not raise the window, only assign focus
     //[[m_osxView window] makeKeyAndOrderFront:nil] ;

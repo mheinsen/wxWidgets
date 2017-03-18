@@ -71,9 +71,6 @@
     #include "wx/access.h"
     #include <ole2.h>
     #include <oleacc.h>
-    #ifndef WM_GETOBJECT
-        #define WM_GETOBJECT 0x003D
-    #endif
     #ifndef OBJID_CLIENT
         #define OBJID_CLIENT 0xFFFFFFFC
     #endif
@@ -124,32 +121,9 @@
     #define ETS_ASSIST          7
 #endif
 
-// define the constants used by AnimateWindow() if our SDK doesn't have them
-#ifndef AW_CENTER
-    #define AW_HOR_POSITIVE 0x00000001
-    #define AW_HOR_NEGATIVE 0x00000002
-    #define AW_VER_POSITIVE 0x00000004
-    #define AW_VER_NEGATIVE 0x00000008
-    #define AW_CENTER       0x00000010
-    #define AW_HIDE         0x00010000
-    #define AW_ACTIVATE     0x00020000
-    #define AW_SLIDE        0x00040000
-    #define AW_BLEND        0x00080000
-#endif
-
-#if defined(TME_LEAVE) && defined(WM_MOUSELEAVE) && wxUSE_DYNLIB_CLASS
+#if wxUSE_DYNLIB_CLASS
     #define HAVE_TRACKMOUSEEVENT
 #endif // everything needed for TrackMouseEvent()
-
-// not all compilers/platforms have X button related declarations (notably
-// Windows CE doesn't, and probably some old SDKs don't neither)
-#ifdef WM_XBUTTONDOWN
-    #define wxHAS_XBUTTON
-#endif
-
-#ifndef MAPVK_VK_TO_CHAR
-    #define MAPVK_VK_TO_CHAR 2
-#endif
 
 // ---------------------------------------------------------------------------
 // global variables
@@ -296,8 +270,7 @@ static void EnsureParentHasControlParentStyle(wxWindow *parent)
 
 // GetCursorPos can return an error, so use this function
 // instead.
-// Error originally observed with WinCE, but later using Remote Desktop
-// to connect to XP.
+// Error observed when using Remote Desktop to connect to XP.
 void wxGetCursorPosMSW(POINT* pt)
 {
     if (!GetCursorPos(pt))
@@ -468,19 +441,26 @@ wxWindowMSW::~wxWindowMSW()
 
 }
 
-/* static */
-const wxChar *wxWindowMSW::MSWGetRegisteredClassName()
+const wxChar *wxWindowMSW::GetMSWClassName(long style)
 {
-    return wxApp::GetRegisteredClassName(wxT("wxWindow"), COLOR_BTNFACE);
+    return wxApp::GetRegisteredClassName
+                  (
+                    wxT("wxWindow"),
+                    COLOR_BTNFACE,
+                    0, // no special extra style
+                    (style & wxFULL_REPAINT_ON_RESIZE) ? wxApp::RegClass_Default
+                                                       : wxApp::RegClass_ReturnNR
+                  );
 }
 
 // real construction (Init() must have been called before!)
-bool wxWindowMSW::Create(wxWindow *parent,
-                         wxWindowID id,
-                         const wxPoint& pos,
-                         const wxSize& size,
-                         long style,
-                         const wxString& name)
+bool wxWindowMSW::CreateUsingMSWClass(const wxChar* classname,
+                                      wxWindow *parent,
+                                      wxWindowID id,
+                                      const wxPoint& pos,
+                                      const wxSize& size,
+                                      long style,
+                                      const wxString& name)
 {
     wxCHECK_MSG( parent, false, wxT("can't create wxWindow without parent") );
 
@@ -506,8 +486,7 @@ bool wxWindowMSW::Create(wxWindow *parent,
         msflags |= WS_VISIBLE;
     }
 
-    if ( !MSWCreate(MSWGetRegisteredClassName(),
-                    NULL, pos, size, msflags, exstyle) )
+    if ( !MSWCreate(classname, NULL, pos, size, msflags, exstyle) )
         return false;
 
     InheritAttributes();
@@ -1588,8 +1567,6 @@ void wxWindowMSW::SetDropTarget(wxDropTarget *pDropTarget)
     }
 }
 
-#endif // wxUSE_DRAG_AND_DROP
-
 // old-style file manager drag&drop support: we retain the old-style
 // DragAcceptFiles in parallel with SetDropTarget.
 void wxWindowMSW::DragAcceptFiles(bool accept)
@@ -1601,6 +1578,7 @@ void wxWindowMSW::DragAcceptFiles(bool accept)
         ::DragAcceptFiles(hWnd, (BOOL)accept);
     }
 }
+#endif // wxUSE_DRAG_AND_DROP
 
 // ----------------------------------------------------------------------------
 // tooltips
@@ -1822,6 +1800,26 @@ wxWindowMSW::DoMoveSibling(WXHWND hwnd, int x, int y, int width, int height)
 
     // otherwise (or if deferring failed) move the window in place immediately
 #endif // wxUSE_DEFERRED_SIZING
+
+    // toplevel window's coordinates are mirrored if the TLW is a child of another
+    // RTL window and changing width without moving the position would enlarge the
+    // window in the wrong direction, so we need to adjust for it
+    if ( IsTopLevel() )
+    {
+        // note that this may be different from GetParent() for wxDialogs
+        HWND tlwParent = ::GetParent((HWND)hwnd);
+        if ( tlwParent && (::GetWindowLong(tlwParent, GWL_EXSTYLE) & WS_EX_LAYOUTRTL) != 0 )
+        {
+            RECT old;
+            ::GetWindowRect((HWND) hwnd, &old);
+            if ( old.left == x && old.right - old.left != width )
+            {
+                x -= width - (old.right - old.left);
+            }
+            // else: not a simple resize
+        }
+    }
+
     if ( !::MoveWindow((HWND)hwnd, x, y, width, height, IsShown()) )
     {
         wxLogLastError(wxT("MoveWindow"));
@@ -1874,17 +1872,24 @@ void wxWindowMSW::DoSetSize(int x, int y, int width, int height, int sizeFlags)
 
     // ... and don't do anything (avoiding flicker) if it's already ok unless
     // we're forced to resize the window
-    if ( x == currentX && y == currentY &&
-         width == currentW && height == currentH &&
-            !(sizeFlags & wxSIZE_FORCE) )
+    if ( !(sizeFlags & wxSIZE_FORCE) )
     {
-        if (sizeFlags & wxSIZE_FORCE_EVENT)
+        if ( width == currentW && height == currentH )
         {
-            wxSizeEvent event( wxSize(width,height), GetId() );
-            event.SetEventObject( this );
-            HandleWindowEvent( event );
+            // We need to send wxSizeEvent ourselves because Windows won't do
+            // it if the size doesn't change.
+            if ( sizeFlags & wxSIZE_FORCE_EVENT )
+            {
+                wxSizeEvent event( wxSize(width,height), GetId() );
+                event.SetEventObject( this );
+                HandleWindowEvent( event );
+            }
+
+            // Still call DoMoveWindow() below if we need to change the
+            // position, otherwise we're done.
+            if ( x == currentX && y == currentY )
+                return;
         }
-        return;
     }
 
     if ( x == wxDefaultCoord && !(sizeFlags & wxSIZE_ALLOW_MINUS_ONE) )
@@ -1967,10 +1972,25 @@ void wxWindowMSW::DoSetClientSize(int width, int height)
         const int widthWin = rectWin.right - rectWin.left,
                   heightWin = rectWin.bottom - rectWin.top;
 
-        // MoveWindow positions the child windows relative to the parent, so
-        // adjust if necessary
-        if ( !IsTopLevel() )
+        if ( IsTopLevel() )
         {
+            // toplevel window's coordinates are mirrored if the TLW is a child of another
+            // RTL window and changing width without moving the position would enlarge the
+            // window in the wrong direction, so we need to adjust for it
+
+            // note that this may be different from GetParent() for wxDialogs
+            HWND tlwParent = ::GetParent(GetHwnd());
+            if ( tlwParent && (::GetWindowLong(tlwParent, GWL_EXSTYLE) & WS_EX_LAYOUTRTL) != 0 )
+            {
+                const int diffWidth = width - (rectClient.right - rectClient.left);
+                rectWin.left -= diffWidth;
+                rectWin.right -= diffWidth;
+            }
+        }
+        else
+        {
+            // MoveWindow positions the child windows relative to the parent, so
+            // adjust if necessary
             wxWindow *parent = GetParent();
             if ( parent )
             {
@@ -2869,11 +2889,9 @@ wxWindowMSW::MSWHandleMessage(WXLRESULT *result,
         case WM_MBUTTONDOWN:
         case WM_MBUTTONUP:
         case WM_MBUTTONDBLCLK:
-#ifdef wxHAS_XBUTTON
         case WM_XBUTTONDOWN:
         case WM_XBUTTONUP:
         case WM_XBUTTONDBLCLK:
-#endif // wxHAS_XBUTTON
             {
                 int x = GET_X_LPARAM(lParam),
                     y = GET_Y_LPARAM(lParam);
@@ -2898,7 +2916,6 @@ wxWindowMSW::MSWHandleMessage(WXLRESULT *result,
             }
             break;
 
-#ifdef MM_JOY1MOVE
         case MM_JOY1MOVE:
         case MM_JOY2MOVE:
         case MM_JOY1ZMOVE:
@@ -2912,7 +2929,6 @@ wxWindowMSW::MSWHandleMessage(WXLRESULT *result,
                                             HIWORD(lParam),
                                             wParam);
             break;
-#endif // MM_JOY1MOVE
 
         case WM_COMMAND:
             {
@@ -3029,13 +3045,11 @@ wxWindowMSW::MSWHandleMessage(WXLRESULT *result,
                     case VK_OEM_PERIOD:
                         break;
 
-#ifdef VK_APPS
                     // special case of VK_APPS: treat it the same as right mouse
                     // click because both usually pop up a context menu
                     case VK_APPS:
                         processed = HandleMouseEvent(WM_RBUTTONDOWN, -1, -1, 0);
                         break;
-#endif // VK_APPS
 
                     default:
                         if ( (wParam >= '0' && wParam <= '9') ||
@@ -3072,14 +3086,12 @@ wxWindowMSW::MSWHandleMessage(WXLRESULT *result,
 
         case WM_SYSKEYUP:
         case WM_KEYUP:
-#ifdef VK_APPS
             // special case of VK_APPS: treat it the same as right mouse button
             if ( wParam == VK_APPS )
             {
                 processed = HandleMouseEvent(WM_RBUTTONUP, -1, -1, 0);
             }
             else
-#endif // VK_APPS
             {
                 processed = HandleKeyUp((WORD) wParam, lParam);
             }
@@ -3254,7 +3266,6 @@ wxWindowMSW::MSWHandleMessage(WXLRESULT *result,
             }
 #endif
 
-#if defined(WM_HELP)
         case WM_HELP:
             {
                 // by default, WM_HELP is propagated by DefWindowProc() upwards
@@ -3290,7 +3301,6 @@ wxWindowMSW::MSWHandleMessage(WXLRESULT *result,
                 }
             }
             break;
-#endif // WM_HELP
 
         case WM_CONTEXTMENU:
             {
@@ -3653,22 +3663,13 @@ bool wxWindowMSW::MSWCreate(const wxChar *wclass,
     // unless we're creating a child window
     int controlId = style & WS_CHILD ? GetId() : 0;
 
-    // for each class "Foo" we have we also have "FooNR" ("no repaint") class
-    // which is the same but without CS_[HV]REDRAW class styles so using it
-    // ensures that the window is not fully repainted on each resize
-    wxString className(wclass);
-    if ( !HasFlag(wxFULL_REPAINT_ON_RESIZE) )
-    {
-        className += wxApp::GetNoRedrawClassSuffix();
-    }
-
     // do create the window
     wxWindowCreationHook hook(this);
 
     m_hWnd = (WXHWND)::CreateWindowEx
                        (
                         extendedStyle,
-                        className.t_str(),
+                        wclass,
                         title ? title : m_windowName.t_str(),
                         style,
                         x, y, w, h,
@@ -3680,7 +3681,7 @@ bool wxWindowMSW::MSWCreate(const wxChar *wclass,
 
     if ( !m_hWnd )
     {
-        wxLogSysError(_("Can't create window of class %s"), className.c_str());
+        wxLogSysError(_("Can't create window of class %s"), wclass);
 
         return false;
     }
@@ -3840,7 +3841,6 @@ bool wxWindowMSW::MSWOnNotify(int WXUNUSED(idCtrl),
 
 bool wxWindowMSW::HandleQueryEndSession(long logOff, bool *mayEnd)
 {
-#ifdef ENDSESSION_LOGOFF
     wxCloseEvent event(wxEVT_QUERY_END_SESSION, wxID_ANY);
     event.SetEventObject(wxTheApp);
     event.SetCanVeto(true);
@@ -3856,16 +3856,10 @@ bool wxWindowMSW::HandleQueryEndSession(long logOff, bool *mayEnd)
     }
 
     return rc;
-#else
-    wxUnusedVar(logOff);
-    wxUnusedVar(mayEnd);
-    return false;
-#endif
 }
 
 bool wxWindowMSW::HandleEndSession(bool endSession, long logOff)
 {
-#ifdef ENDSESSION_LOGOFF
     // do nothing if the session isn't ending
     if ( !endSession )
         return false;
@@ -3880,11 +3874,6 @@ bool wxWindowMSW::HandleEndSession(bool endSession, long logOff)
     event.SetLoggingOff((logOff & ENDSESSION_LOGOFF) != 0);
 
     return wxTheApp->ProcessEvent(event);
-#else
-    wxUnusedVar(endSession);
-    wxUnusedVar(logOff);
-    return false;
-#endif
 }
 
 // ---------------------------------------------------------------------------
@@ -4198,9 +4187,7 @@ bool wxWindowMSW::HandlePower(WXWPARAM wParam,
         case PBT_APMPOWERSTATUSCHANGE:
         case PBT_APMOEMEVENT:
         case PBT_APMRESUMECRITICAL:
-#ifdef PBT_APMRESUMEAUTOMATIC
         case PBT_APMRESUMEAUTOMATIC:
-#endif
             evtType = wxEVT_NULL;
             break;
     }
@@ -4888,7 +4875,13 @@ wxWindowMSW::MSWGetBgBrushForChild(WXHDC hDC, wxWindowMSW *child)
         RECT rc;
         ::GetWindowRect(GetHwndOf(child), &rc);
 
-        ::MapWindowPoints(NULL, GetHwnd(), (POINT *)&rc, 1);
+        // It is important to pass both points to MapWindowPoints() as in
+        // addition to converting them to our coordinate system, this function
+        // will also exchange the left and right coordinates if this window
+        // uses RTL layout, which is exactly what we need here as the child
+        // window origin is its _right_ top corner in this case and not the
+        // left one.
+        ::MapWindowPoints(NULL, GetHwnd(), (POINT *)&rc, 2);
 
         int x = rc.left,
             y = rc.top;
@@ -5034,9 +5027,10 @@ bool wxWindowMSW::HandleExitSizeMove()
     return HandleWindowEvent(event);
 }
 
+#if wxUSE_DEFERRED_SIZING
+
 bool wxWindowMSW::BeginRepositioningChildren()
 {
-#if wxUSE_DEFERRED_SIZING
     int numChildren = 0;
     for ( HWND child = ::GetWindow(GetHwndOf(this), GW_CHILD);
           child;
@@ -5062,12 +5056,10 @@ bool wxWindowMSW::BeginRepositioningChildren()
 
     // Return true to indicate that EndDeferWindowPos() should be called.
     return true;
-#endif // wxUSE_DEFERRED_SIZING
 }
 
 void wxWindowMSW::EndRepositioningChildren()
 {
-#if wxUSE_DEFERRED_SIZING
     wxASSERT_MSG( m_hDWP, wxS("Shouldn't be called") );
 
     // reset m_hDWP to NULL so that child windows don't try to use our
@@ -5091,8 +5083,9 @@ void wxWindowMSW::EndRepositioningChildren()
         wxWindowMSW * const child = node->GetData();
         child->MSWEndDeferWindowPos();
     }
-#endif // wxUSE_DEFERRED_SIZING
 }
+
+#endif // wxUSE_DEFERRED_SIZING
 
 bool wxWindowMSW::HandleSize(int WXUNUSED(w), int WXUNUSED(h), WXUINT wParam)
 {
@@ -5268,10 +5261,8 @@ void wxWindowMSW::InitMouseEvent(wxMouseEvent& event,
     event.m_leftDown = (flags & MK_LBUTTON) != 0;
     event.m_middleDown = (flags & MK_MBUTTON) != 0;
     event.m_rightDown = (flags & MK_RBUTTON) != 0;
-#ifdef wxHAS_XBUTTON
     event.m_aux1Down = (flags & MK_XBUTTON1) != 0;
     event.m_aux2Down = (flags & MK_XBUTTON2) != 0;
-#endif // wxHAS_XBUTTON
     event.m_altDown = ::wxIsAltDown();
 
     event.SetTimestamp(::GetMessageTime());
@@ -5310,7 +5301,6 @@ bool wxWindowMSW::HandleMouseEvent(WXUINT msg, int x, int y, WXUINT flags)
         wxEVT_AUX2_DCLICK
     };
 
-#ifdef wxHAS_XBUTTON
     // the same messages are used for both auxiliary mouse buttons so we need
     // to adjust the index manually
     switch ( msg )
@@ -5321,7 +5311,6 @@ bool wxWindowMSW::HandleMouseEvent(WXUINT msg, int x, int y, WXUINT flags)
             if ( flags & MK_XBUTTON2 )
                 msg += wxEVT_AUX2_DOWN - wxEVT_AUX1_DOWN;
     }
-#endif // wxHAS_XBUTTON
 
     wxMouseEvent event(eventsMouse[msg - WM_MOUSEMOVE]);
     InitMouseEvent(event, x, y, flags);
@@ -5659,19 +5648,13 @@ int wxWindowMSW::HandleMenuChar(int chAccel,
 
     WinStruct<MENUITEMINFO> mii;
 
-    // we could use MIIM_FTYPE here as we only need to know if the item is
-    // ownerdrawn or not and not dwTypeData which MIIM_TYPE also returns, but
-    // MIIM_FTYPE is not supported under Win95
-    mii.fMask = MIIM_TYPE | MIIM_DATA;
+    // use MIIM_FTYPE to know if the item is ownerdrawn or not
+    mii.fMask = MIIM_FTYPE | MIIM_DATA;
 
     // find if we have this letter in any owner drawn item
     const int count = ::GetMenuItemCount(hmenu);
     for ( int i = 0; i < count; i++ )
     {
-        // previous loop iteration could modify it, reset it back before
-        // calling GetMenuItemInfo() to prevent it from overflowing dwTypeData
-        mii.cch = 0;
-
         if ( ::GetMenuItemInfo(hmenu, i, TRUE, &mii) )
         {
             if ( mii.fType == MFT_OWNERDRAW )
@@ -5737,7 +5720,6 @@ bool wxWindowMSW::HandleClipboardEvent(WXUINT nMsg)
 
 bool wxWindowMSW::HandleJoystickEvent(WXUINT msg, int x, int y, WXUINT flags)
 {
-#ifdef JOY_BUTTON1
     int change = 0;
     if ( flags & JOY_BUTTON1CHG )
         change = wxJOY_BUTTON1;
@@ -5817,13 +5799,6 @@ bool wxWindowMSW::HandleJoystickEvent(WXUINT msg, int x, int y, WXUINT flags)
     event.SetEventObject(this);
 
     return HandleWindowEvent(event);
-#else
-    wxUnusedVar(msg);
-    wxUnusedVar(x);
-    wxUnusedVar(y);
-    wxUnusedVar(flags);
-    return false;
-#endif
 }
 
 // ---------------------------------------------------------------------------
@@ -6054,11 +6029,9 @@ const struct wxKeyMapping
     { VK_NUMLOCK,       WXK_NUMLOCK },
     { VK_SCROLL,        WXK_SCROLL },
 
-#ifdef VK_APPS
     { VK_LWIN,          WXK_WINDOWS_LEFT },
     { VK_RWIN,          WXK_WINDOWS_RIGHT },
     { VK_APPS,          WXK_WINDOWS_MENU },
-#endif // VK_APPS defined
 
     { VK_BROWSER_BACK,        WXK_BROWSER_BACK },
     { VK_BROWSER_FORWARD,     WXK_BROWSER_FORWARD },
@@ -6329,8 +6302,6 @@ WXWORD WXToVK(int wxk, bool *isExtended)
 // small helper for wxGetKeyState() and wxGetMouseState()
 static inline bool wxIsKeyDown(WXWORD vk)
 {
-    // SM_SWAPBUTTON is not available under CE, so don't swap buttons there
-#ifdef SM_SWAPBUTTON
     if ( vk == VK_LBUTTON || vk == VK_RBUTTON )
     {
         if ( ::GetSystemMetrics(SM_SWAPBUTTON) )
@@ -6341,7 +6312,6 @@ static inline bool wxIsKeyDown(WXWORD vk)
                 vk = VK_LBUTTON;
         }
     }
-#endif // SM_SWAPBUTTON
 
     // the low order bit indicates whether the key was pressed since the last
     // call and the high order one indicates whether it is down right now and
@@ -6387,10 +6357,8 @@ wxMouseState wxGetMouseState()
     ms.SetLeftDown(wxIsKeyDown(VK_LBUTTON));
     ms.SetMiddleDown(wxIsKeyDown(VK_MBUTTON));
     ms.SetRightDown(wxIsKeyDown(VK_RBUTTON));
-#ifdef wxHAS_XBUTTON
     ms.SetAux1Down(wxIsKeyDown(VK_XBUTTON1));
     ms.SetAux2Down(wxIsKeyDown(VK_XBUTTON2));
-#endif // wxHAS_XBUTTON
 
     ms.SetControlDown(wxIsCtrlDown ());
     ms.SetShiftDown  (wxIsShiftDown());
@@ -7172,7 +7140,7 @@ bool wxWindowMSW::HandleHotKey(WXWPARAM wParam, WXLPARAM lParam)
 class wxIdleWakeUpModule : public wxModule
 {
 public:
-    virtual bool OnInit()
+    virtual bool OnInit() wxOVERRIDE
     {
         ms_hMsgHookProc = ::SetWindowsHookEx
                             (
@@ -7192,7 +7160,7 @@ public:
         return true;
     }
 
-    virtual void OnExit()
+    virtual void OnExit() wxOVERRIDE
     {
         ::UnhookWindowsHookEx(wxIdleWakeUpModule::ms_hMsgHookProc);
     }

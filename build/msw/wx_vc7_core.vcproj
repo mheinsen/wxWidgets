@@ -770,6 +770,9 @@
 				RelativePath="..\..\src\msw\cursor.cpp">
 			</File>
 			<File
+				RelativePath="..\..\src\msw\customdraw.cpp">
+			</File>
+			<File
 				RelativePath="..\..\src\msw\data.cpp">
 			</File>
 			<File
@@ -924,9 +927,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\msw\palette.cpp">
-			</File>
-			<File
-				RelativePath="..\..\src\msw\panel.cpp">
 			</File>
 			<File
 				RelativePath="..\..\src\msw\pen.cpp">
@@ -2286,6 +2286,9 @@
 				RelativePath="..\..\include\wx\infobar.h">
 			</File>
 			<File
+				RelativePath="..\..\include\wx\itemattr.h">
+			</File>
+			<File
 				RelativePath="..\..\include\wx\itemid.h">
 			</File>
 			<File
@@ -2751,7 +2754,7 @@
 				RelativePath="..\..\include\wx\xrc\xh_animatctrl.h">
 			</File>
 			<File
-				RelativePath="..\..\include\wx\xrc\xh_auinotbk.h">
+				RelativePath="..\..\include\wx\xrc\xh_aui.h">
 			</File>
 			<File
 				RelativePath="..\..\include\wx\xrc\xh_auitoolb.h">

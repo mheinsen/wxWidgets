@@ -542,6 +542,7 @@ WX_ARG_WITHOUT(gtkprint,   [  --without-gtkprint      don't use GTK printing sup
 WX_ARG_WITH(gnomevfs,      [  --with-gnomevfs         use GNOME VFS for associating MIME types], wxUSE_LIBGNOMEVFS)
 WX_ARG_WITH(libnotify,     [  --with-libnotify        use libnotify for notifications], wxUSE_LIBNOTIFY)
 WX_ARG_WITH(opengl,        [  --with-opengl           use OpenGL (or Mesa)], wxUSE_OPENGL)
+WX_ARG_WITH(xtest,         [  --with-xtest            use XTest extension], wxUSE_XTEST)
 
 fi
 dnl for GUI only
@@ -641,6 +642,7 @@ WX_ARG_ENABLE(std_containers_compat, [  --enable-std_containers_compat     use s
 WX_ARG_ENABLE(std_iostreams, [  --enable-std_iostreams  use standard C++ stream classes], wxUSE_STD_IOSTREAM)
 WX_ARG_ENABLE(std_string,    [  --enable-std_string     use standard C++ string classes], wxUSE_STD_STRING)
 WX_ARG_ENABLE(std_string_conv_in_wxstring, [ --enable-std_string_conv_in_wxstring     provide implicit conversion to std::string in wxString], wxUSE_STD_STRING_CONV_IN_WXSTRING)
+WX_ARG_DISABLE(unsafe_conv_in_wxstring,     [ --disable-unsafe_conv_in_wxstring        disable unsafe implicit conversions in wxString], wxUSE_UNSAFE_WXSTRING_CONV)
 WX_ARG_DISABLE(unicode,      [  --disable-unicode       compile without Unicode support], wxUSE_UNICODE)
 WX_ARG_ENABLE_PARAM(utf8,    [  --enable-utf8           use UTF-8 representation for strings (Unix only)], wxUSE_UNICODE_UTF8)
 WX_ARG_ENABLE(utf8only,      [  --enable-utf8only       only support UTF-8 locales in UTF-8 build (Unix only)], wxUSE_UNICODE_UTF8_LOCALE)
@@ -721,6 +723,7 @@ WX_ARG_FEATURE(log,           [  --enable-log            use logging system], wx
 WX_ARG_FEATURE(longlong,      [  --enable-longlong       use wxLongLong class], wxUSE_LONGLONG)
 WX_ARG_FEATURE(mimetype,      [  --enable-mimetype       use wxMimeTypesManager], wxUSE_MIMETYPE)
 WX_ARG_FEATURE(printfposparam,[  --enable-printfposparam use wxVsnprintf() which supports positional parameters], wxUSE_PRINTF_POS_PARAMS)
+WX_ARG_FEATURE(secretstore,   [  --enable-secretstore    use wxSecretStore class], wxUSE_SECRETSTORE)
 WX_ARG_FEATURE(snglinst,      [  --enable-snglinst       use wxSingleInstanceChecker class], wxUSE_SNGLINST_CHECKER)
 WX_ARG_FEATURE(sound,         [  --enable-sound          use wxSound class], wxUSE_SOUND)
 WX_ARG_FEATURE(stdpaths,      [  --enable-stdpaths       use wxStandardPaths class], wxUSE_STDPATHS)
@@ -743,8 +746,11 @@ WX_ARG_FEATURE(protocol_file, [  --enable-protocol-file  FILE support in wxProto
 
 WX_ARG_FEATURE(threads,     [  --enable-threads        use threads], wxUSE_THREADS)
 
+if test "$wxUSE_MSW" = 1 ; then
+WX_ARG_DISABLE(dbghelp,     [  --enable-dbghelp        use dbghelp.dll API (Win32 only)], wxUSE_DBGHELP)
 WX_ARG_ENABLE(iniconf,      [  --enable-iniconf        use wxIniConfig (Win32 only)], wxUSE_INICONF)
 WX_ARG_FEATURE(regkey,      [  --enable-regkey         use wxRegKey class (Win32 only)], wxUSE_REGKEY)
+fi
 
 if test "$wxUSE_GUI" = "yes"; then
 
@@ -965,6 +971,10 @@ dnl ---------------------------------------------------------------------------
 dnl misc GUI options
 dnl ---------------------------------------------------------------------------
 
+if test "$wxUSE_MSW" = 1 ; then
+    DEFAULT_wxUSE_ACCESSIBILITY=yes
+fi
+
 WX_ARG_FEATURE(menus,       [  --enable-menus          use wxMenu/wxMenuBar/wxMenuItem classes], wxUSE_MENUS)
 WX_ARG_FEATURE(miniframe,   [  --enable-miniframe      use wxMiniFrame class], wxUSE_MINIFRAME)
 WX_ARG_FEATURE(tooltips,    [  --enable-tooltips       use wxToolTip class], wxUSE_TOOLTIPS)
@@ -1062,18 +1072,22 @@ if test -n "$wxWITH_CXX"; then
     dnl autoconf, not run, time.
     case "$wxWITH_CXX" in
         11)
+            AX_CXX_COMPILE_STDCXX(11,,optional)
             if test -n "$wxWITH_CXX_IS_OPTIONAL"; then
-                AX_CXX_COMPILE_STDCXX(11,,optional)
-            else
-                AX_CXX_COMPILE_STDCXX(11)
+                if test "$HAVE_CXX11" != 1; then
+                    AC_MSG_FAILURE([C++11 support was requested but is not available])
+                fi
             fi
-            have_cxxN=$HAVE_CXX11
             ;;
 
         14)
             dnl This check can't be optional because we have only --with-cxx=14
             dnl and not --enable-cxx14 option.
             AX_CXX_COMPILE_STDCXX(14)
+
+            dnl Notice that because it's not optional, the macro doesn't define
+            dnl HAVE_CXX14. We don't use it anyhow so far, so it doesn't
+            dnl matter, but we could need to do it ourselves here in the future.
 
             dnl If we have C++14, we necessarily have C++11 too.
             HAVE_CXX11=1
@@ -1792,9 +1806,6 @@ if test "$HAVE_CXX11" != "1" ; then
 
 dnl check for iostream (as opposed to iostream.h) standard header
 WX_CPP_NEW_HEADERS(, AC_DEFINE(wxUSE_IOSTREAMH))
-
-dnl check whether C++ compiler supports explicit keyword
-WX_CPP_EXPLICIT
 
 dnl the next few tests are all for C++ features and so need to be done using
 dnl C++ compiler
@@ -3031,7 +3042,7 @@ libraries returned by 'pkg-config gtk+-2.0 --libs' or 'gtk-config
         if test "$ac_find_includes" != "" ; then
             AC_MSG_RESULT(found in $ac_find_includes)
             WX_INCLUDE_PATH_EXIST($ac_find_includes, $TOOLKIT_INCLUDE)
-            TOOLKIT_INCLUDE="$TOOLKIT_INCLUDE$ac_path_to_include"
+            TOOLKIT_INCLUDE="$TOOLKIT_INCLUDE $ac_path_to_include"
         else
             save_CFLAGS=$CFLAGS
             CFLAGS="$TOOLKIT_INCLUDE $CFLAGS"
@@ -3065,7 +3076,7 @@ libraries returned by 'pkg-config gtk+-2.0 --libs' or 'gtk-config
             AC_MSG_RESULT(found in $ac_find_libraries)
 
             WX_LINK_PATH_EXIST($ac_find_libraries, $GUI_TK_LIBRARY)
-            GUI_TK_LIBRARY="$GUI_TK_LIBRARY$ac_path_to_link"
+            GUI_TK_LIBRARY="$GUI_TK_LIBRARY $ac_path_to_link"
         else
             dnl it might happen that we found headers in one of the standard
             dnl paths but the libs are elsewhere but still in default (linker)
@@ -3106,7 +3117,7 @@ libraries returned by 'pkg-config gtk+-2.0 --libs' or 'gtk-config
                 for libsm_ice in "" " -lSM -lICE"; do
                     if test "$libs_found" = 0; then
                         save_LIBS="$LIBS"
-                        LIBS="$GUI_TK_LIBRARY -lXm ${libp} -lXmu -lXext -lXt${libsm_ice} -lX11"
+                        LIBS="$GUI_TK_LIBRARY -lXm ${libp} -lXmu -lXext -lXt ${libsm_ice} -lX11"
                         save_CFLAGS=$CFLAGS
                         CFLAGS="$TOOLKIT_INCLUDE $CFLAGS"
 
@@ -3125,7 +3136,7 @@ libraries returned by 'pkg-config gtk+-2.0 --libs' or 'gtk-config
                                 libp_link="$libp"
                                 libsm_ice_link="$libsm_ice"
                                 AC_MSG_RESULT(
-                                    [need${libp_link}${libsm_ice_link}])
+                                    [need ${libp_link} ${libsm_ice_link}])
                                 libs_found=1
                             ], []
                         )
@@ -3188,7 +3199,7 @@ libraries returned by 'pkg-config gtk+-2.0 --libs' or 'gtk-config
 
         CFLAGS=$save_CFLAGS
 
-        GUI_TK_LIBRARY="$GUI_TK_LIBRARY${libsgm_link} -lXm${libp_link} -lXmu -lXext -lXt${libsm_ice_link} -lX11"
+        GUI_TK_LIBRARY="$GUI_TK_LIBRARY ${libsgm_link} -lXm ${libp_link} -lXmu -lXext -lXt ${libsm_ice_link} -lX11"
         TOOLKIT=MOTIF
         GUIDIST=MOTIF_DIST
     fi
@@ -3201,7 +3212,7 @@ libraries returned by 'pkg-config gtk+-2.0 --libs' or 'gtk-config
             WX_PATH_FIND_LIBRARIES(Xpm)
             if test "$ac_find_libraries" != "" ; then
                 WX_LINK_PATH_EXIST($ac_find_libraries,$GUI_TK_LIBRARY)
-                GUI_TK_LIBRARY="$GUI_TK_LIBRARY$ac_path_to_link"
+                GUI_TK_LIBRARY="$GUI_TK_LIBRARY $ac_path_to_link"
                 AC_MSG_RESULT(found in $ac_find_libraries)
 
                 AC_CACHE_CHECK([for X11/xpm.h],
@@ -3474,7 +3485,7 @@ if test "$wxUSE_OPENGL" = "yes" -o "$wxUSE_OPENGL" = "auto"; then
                         WX_LINK_PATH_EXIST([$ac_find_libraries],[$LDFLAGS])
                         if test "$ac_path_to_link" != " -L/usr/lib" -a \
                                 "$ac_path_to_link" != "$LDFLAGS_GL" ; then
-                          LDFLAGS_GL="$LDFLAGS_GL$ac_path_to_link"
+                          LDFLAGS_GL="$LDFLAGS_GL $ac_path_to_link"
                         fi
                       fi
 
@@ -3489,7 +3500,7 @@ if test "$wxUSE_OPENGL" = "yes" -o "$wxUSE_OPENGL" = "auto"; then
                       if test "$ac_find_libraries" != "std" ; then
                         WX_LINK_PATH_EXIST([$ac_find_libraries],[$LDFLAGS])
                         if test "$ac_path_to_link" != " -L/usr/lib" ; then
-                          LDFLAGS_GL="$LDFLAGS_GL$ac_path_to_link"
+                          LDFLAGS_GL="$LDFLAGS_GL $ac_path_to_link"
                         fi
                       fi
                       OPENGL_LIBS="-lMesaGL -lMesaGLU"
@@ -5190,7 +5201,7 @@ if test "$TOOLKIT" != "MSW"; then
                             [
                                 AC_DEFINE(HAVE_DLOPEN)
                                 HAVE_DL_FUNCS=1
-                                DL_LINK=" -ldl$DL_LINK"
+                                DL_LINK="-ldl $DL_LINK"
                             ],
                             [
                                 AC_CHECK_FUNCS(shl_load,
@@ -5202,7 +5213,7 @@ if test "$TOOLKIT" != "MSW"; then
                                                 AC_CHECK_LIB(shl_load, dld,
                                                              [
                                                                 HAVE_SHL_FUNCS=1
-                                                                DL_LINK=" -ldld$DL_LINK"
+                                                                DL_LINK="-ldld $DL_LINK"
                                                              ])
                                               ])
                             ])
@@ -5311,6 +5322,36 @@ if test "$wxUSE_FSWATCHER" = "yes"; then
         SAMPLES_SUBDIRS="$SAMPLES_SUBDIRS fswatcher"
     else
         AC_MSG_WARN([wxFileSystemWatcher won't be available on this platform])
+    fi
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl Secret storage
+dnl ---------------------------------------------------------------------------
+
+if test "$wxUSE_SECRETSTORE" = "yes"; then
+    dnl The required APIs are always available under MSW and OS X but we must
+    dnl have GNOME libsecret under Unix to be able to compile this class.
+    if test "$wxUSE_MSW" != "1" -a "$wxUSE_OSX_COCOA" != 1; then
+        PKG_CHECK_MODULES(LIBSECRET, [libsecret-1],
+            [
+                CXXFLAGS="$LIBSECRET_CFLAGS $CXXFLAGS"
+                LIBS="$LIBSECRET_LIBS $LIBS"
+            ],
+            [
+                AC_MSG_WARN([libsecret not found, wxSecretStore won't be available])
+                wxUSE_SECRETSTORE=no
+            ]
+        )
+    fi
+
+    if test "$wxUSE_SECRETSTORE" = "yes"; then
+        if test "$USE_DARWIN" = 1; then
+            LIBS="-framework Security $LIBS"
+        fi
+
+        AC_DEFINE(wxUSE_SECRETSTORE)
+        SAMPLES_SUBDIRS="$SAMPLES_SUBDIRS secretstore"
     fi
 fi
 
@@ -5623,6 +5664,10 @@ fi
 
 if test "$wxUSE_STD_STRING_CONV_IN_WXSTRING" = "yes"; then
   AC_DEFINE(wxUSE_STD_STRING_CONV_IN_WXSTRING)
+fi
+
+if test "$wxUSE_UNSAFE_WXSTRING_CONV" = "yes"; then
+  AC_DEFINE(wxUSE_UNSAFE_WXSTRING_CONV)
 fi
 
 if test "$wxUSE_STDPATHS" = "yes"; then
@@ -6263,7 +6308,7 @@ if test "$USE_WIN32" = 1 -a \( "$wxUSE_DATAOBJ"       = "yes" \
                            [AC_MSG_RESULT(no)],
                            [AC_MSG_RESULT(yes)
                             WXCONFIG_CXXFLAGS="$WXCONFIG_CXXFLAGS -fvtable-thunks"])
-            LIBS=" -lrpcrt4 -loleaut32 -lole32 -luuid$LIBS"
+            LIBS="-lrpcrt4 -loleaut32 -lole32 -luuid $LIBS"
             if test "$wxUSE_OLE" = "yes" ; then
                 AC_DEFINE(wxUSE_OLE)
                 AC_DEFINE(wxUSE_OLE_AUTOMATION)
@@ -6351,8 +6396,38 @@ if test "$wxUSE_MOUSEWHEEL" = "yes" ; then
 fi
 
 if test "$wxUSE_UIACTIONSIMULATOR" = "yes" ; then
-    AC_DEFINE(wxUSE_UIACTIONSIMULATOR)
-    SAMPLES_SUBDIRS="$SAMPLES_SUBDIRS uiaction"
+    if test "$wxUSE_GTK" = 1 -o "$wxUSE_MOTIF" = 1 -o "$wxUSE_X11" = 1; then
+        if test "$wxUSE_XTEST" = "yes" ; then
+            PKG_CHECK_MODULES(XTST, xtst,
+                [
+                    GUI_TK_LIBRARY="$GUI_TK_LIBRARY $XTST_LIBS"
+                    CFLAGS="$XTST_CFLAGS $CFLAGS"
+                    CXXFLAGS="$XTST_CFLAGS $CXXFLAGS"
+                    AC_DEFINE(wxUSE_XTEST)
+                ],
+                [
+                    if test "$WXGTK3" = 1; then
+                        dnl This class can't work without XTest with GTK+ 3
+                        dnl which uses XInput2 and so ignores XSendEvent().
+                        AC_MSG_WARN([XTest not found, disabling wxUIActionSimulator])
+                        wxUSE_UIACTIONSIMULATOR=no
+                    fi
+                    dnl The other ports can use XSendEvent(), so don't warn
+                    wxUSE_XTEST="no"
+                ]
+            )
+        elif test "$WXGTK3" = 1; then
+            dnl As per above, wxUIActionSimulator can't be used in this case,
+            dnl but there is no need to warn, presumably the user knows what
+            dnl he's doing if --without-xtest was explicitly specified.
+            wxUSE_UIACTIONSIMULATOR=no
+        fi
+    fi
+
+    if test "$wxUSE_UIACTIONSIMULATOR" = "yes" ; then
+        AC_DEFINE(wxUSE_UIACTIONSIMULATOR)
+        SAMPLES_SUBDIRS="$SAMPLES_SUBDIRS uiaction"
+    fi
 fi
 
 if test "$wxUSE_DC_TRANSFORM_MATRIX" = "yes" ; then
@@ -7157,6 +7232,37 @@ if test "$wxUSE_AUTOID_MANAGEMENT" = "yes"; then
 fi
 
 if test "$USE_WIN32" = 1 ; then
+    if test "$wxUSE_DBGHELP" = "yes"; then
+        AC_CACHE_CHECK([if debug help API is available], wx_cv_lib_debughlp,
+            [
+                dnl we need just the header, not the library, as we load the
+                dnl DLL dynamically anyhow during run-time
+                AC_LANG_PUSH(C++)
+                AC_TRY_COMPILE(
+                    [#include <windows.h>
+                     #include <imagehlp.h>],
+                    [
+                        #ifndef API_VERSION_NUMBER
+                        #error API_VERSION_NUMBER not defined!
+                        #endif
+                        #if API_VERSION_NUMBER < 9
+                        #error API_VERSION_NUMBER at least 9 required.
+                        #endif
+                    ],
+                    wx_cv_lib_debughlp=yes,
+                    wx_cv_lib_debughlp=no
+                )
+                AC_LANG_POP()
+            ]
+        )
+
+        if test "$wx_cv_lib_debughlp" = yes; then
+            AC_DEFINE(wxUSE_DBGHELP)
+        else
+            AC_MSG_WARN([Debug help API and wxStackWalker won't be available])
+        fi
+    fi
+
     if test "$wxUSE_INICONF" = "yes"; then
         AC_DEFINE(wxUSE_INICONF)
     fi
@@ -7308,13 +7414,28 @@ if test "$wxUSE_MEDIACTRL" = "yes" -o "$wxUSE_MEDIACTRL" = "auto"; then
         fi
 
     elif test "$wxUSE_MAC" = 1; then
-        if test "$wxUSE_OSX_IPHONE" = 1; then
-            dnl this will also be used for cocoa in the future
-            GST_LIBS="-framework AVFoundation -framework CoreMedia"
-        else
-            dnl We always have the necessary libraries under Mac
-            dnl but we need to link with it explicitly.
-            GST_LIBS="-framework QTKit"
+        dnl We always have the necessary libraries under Mac
+        dnl but we need to link with it explicitly.
+        GST_LIBS="-framework AVFoundation -framework CoreMedia"
+        if test "$wxUSE_OSX_IPHONE" != 1; then
+            dnl In addition to AVFoundation AVKit may be used when available
+            dnl AVKit is only available since OS X 10.9
+            old_CPPFLAGS="$CPPFLAGS"
+            CPPFLAGS="-x objective-c++ $CPPFLAGS"
+            AC_MSG_CHECKING([if AVKit is available])
+            AC_TRY_COMPILE(
+                [#include "AvailabilityMacros.h"],
+                [
+                    #if defined(MAC_OS_X_VERSION_10_9) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_9
+                        // AVKit available
+                    #else
+                        choke me
+                    #endif
+                ],
+                [GST_LIBS="$GST_LIBS -framework AVKit"; AC_MSG_RESULT(yes)],
+                AC_MSG_RESULT(no)
+            )
+            CPPFLAGS="$old_CPPFLAGS"
         fi
     fi
 
@@ -7542,6 +7663,10 @@ elif test "$GXX" = yes ; then
     dnl other ones
     if test "$WXGTK3" = 1 -o "$wxUSE_MAC" = 1 ; then
         CXXWARNINGS="$CXXWARNINGS -Wno-deprecated-declarations"
+
+        dnl CXXWARNINGS is not used for Objective-C++ code compilation, but we
+        dnl want to avoid these warnings in it too when building wxOSX.
+        OBJCXXFLAGS="$OBJCXXFLAGS -Wno-deprecated-declarations"
     fi
 fi
 
@@ -7570,22 +7695,6 @@ OBJCXXFLAGS=`echo $WXCONFIG_CXXFLAGS $C_AND_CXX_FLAGS $OBJCXXFLAGS `
 dnl now that we added WXCONFIG_CPPFLAGS to CPPFLAGS we can add the wx-config
 dnl only stuff to it
 WXCONFIG_CPPFLAGS=`echo $WXCONFIG_CPPFLAGS $WXCONFIG_ONLY_CPPFLAGS`
-
-
-if test "x$MWCC" = "xyes"; then
-    dnl Correct MW 8.3 to be more similar to GCC.  In particular we
-    dnl must use <regex.h> from system not our local copy on OS X,
-    dnl but must use local not system on OS 9.
-    dnl The following should make all -I paths usable for <> includes
-    dnl while first checking in real system paths.  With 8.3 using
-    dnl -gccincludes it will actually check local paths before system
-    dnl even for <> which is totally wrong.
-
-    dnl Note that because this absolutely needs to be before any -I
-    dnl that we have to tack it on to the end of the compiler commandline.
-    CC="$CC -cwd source -I-"
-    CXX="$CXX -cwd source -I-"
-fi
 
 
 LIBS=`echo $LIBS`

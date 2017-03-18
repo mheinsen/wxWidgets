@@ -32,6 +32,7 @@
 #include "wx/image.h"
 #include "wx/imaglist.h"
 #include "wx/tokenzr.h"
+#include "wx/dynlib.h"
 
 #ifdef wxHAS_RAW_BITMAP
 #include "wx/rawbmp.h"
@@ -1440,9 +1441,37 @@ void Menu::Show(Point pt, Window &w) {
 
 //----------------------------------------------------------------------
 
-DynamicLibrary *DynamicLibrary::Load(const char *WXUNUSED(modulePath)) {
-    wxFAIL_MSG(wxT("Dynamic lexer loading not implemented yet"));
-    return NULL;
+class DynamicLibraryImpl : public DynamicLibrary {
+public:
+    explicit DynamicLibraryImpl(const char *modulePath)
+        : m_dynlib(wxString::FromUTF8(modulePath), wxDL_LAZY) {
+    }
+
+    // Use GetSymbol to get a pointer to the relevant function.
+    virtual Function FindFunction(const char *name) wxOVERRIDE {
+        if (m_dynlib.IsLoaded()) {
+            bool status;
+            void* fn_address = m_dynlib.GetSymbol(wxString::FromUTF8(name),
+                                                  &status);
+            if(status)
+                return fn_address;
+            else
+                return NULL;
+        }
+        else
+            return NULL;
+    }
+
+    virtual bool IsValid() wxOVERRIDE {
+        return m_dynlib.IsLoaded();
+    }
+
+private:
+    wxDynamicLibrary m_dynlib;
+};
+
+DynamicLibrary *DynamicLibrary::Load(const char *modulePath) {
+    return static_cast<DynamicLibrary *>( new DynamicLibraryImpl(modulePath) );
 }
 
 //----------------------------------------------------------------------
@@ -1618,44 +1647,25 @@ double ElapsedTime::Duration(bool reset) {
 
 #if wxUSE_UNICODE
 
-#include "UniConversion.h"
-
-// Convert using Scintilla's functions instead of wx's, Scintilla's are more
-// forgiving and won't assert...
+// For historical reasons, we use Scintilla-specific conversion functions, we
+// should probably just call FromUTF8()/utf8_str() directly instead now.
 
 wxString stc2wx(const char* str, size_t len)
 {
-    if (!len)
-        return wxEmptyString;
-
-    size_t wclen = UTF16Length(str, len);
-    wxWCharBuffer buffer(wclen+1);
-
-    size_t actualLen = UTF16FromUTF8(str, len, buffer.data(), wclen+1);
-    return wxString(buffer.data(), actualLen);
+    return wxString::FromUTF8(str, len);
 }
 
 
 
 wxString stc2wx(const char* str)
 {
-    return stc2wx(str, strlen(str));
+    return wxString::FromUTF8(str);
 }
 
 
 wxWX2MBbuf wx2stc(const wxString& str)
 {
-    const wchar_t* wcstr = str.c_str();
-    size_t wclen         = str.length();
-    size_t len           = UTF8Length(wcstr, wclen);
-
-    // The buffer object adds extra byte for the terminating NUL and we must
-    // pass the total length, including this NUL, to UTF8FromUTF16() to ensure
-    // that it NULL-terminates the string.
-    wxCharBuffer buffer(len);
-    UTF8FromUTF16(wcstr, wclen, buffer.data(), len + 1);
-
-    return buffer;
+    return str.utf8_str();
 }
 
 #endif

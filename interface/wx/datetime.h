@@ -567,6 +567,15 @@ public:
     time_t GetTicks() const;
 
     /**
+        Returns the number of milliseconds since Jan 1, 1970 UTC.
+
+        Directly returns the internal representation of wxDateTime object as
+        the number of milliseconds (positive or negative) since the Unix/C
+        epoch.
+     */
+    wxLongLong GetValue() const;
+
+    /**
         Returns broken down representation of the date and time.
     */
     Tm GetTm(const TimeZone& tz = Local) const;
@@ -645,7 +654,14 @@ public:
         @name Date Comparison
 
         There are several functions to allow date comparison. To supplement
-        them, a few global operators, etc taking wxDateTime are defined.
+        them, the usual comparison operators taking wxDateTime are defined as
+        well.
+
+        Notice that an invalid wxDateTime object can only be compared for
+        exact equality, i.e. using @c operator==(), @c operator!=() or
+        IsEqualTo(), but comparisons involving an invalid wxDateTime object
+        using any other operators or IsEarlierThan() or IsLaterThan() functions
+        would result in an assert because their result is not well-defined.
     */
     //@{
 

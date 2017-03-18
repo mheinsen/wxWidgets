@@ -100,7 +100,7 @@
 
 #ifdef __WINDOWS__
     #include "wx/msw/private.h"
-    #include <shlobj.h>         // for CLSID_ShellLink
+    #include "wx/msw/wrapshl.h"         // for CLSID_ShellLink
     #include "wx/msw/missing.h"
     #include "wx/msw/ole/oleutils.h"
     #include "wx/msw/private/comptr.h"
@@ -668,7 +668,7 @@ wxFileSystemObjectExists(const wxString& path, int flags)
     // Anything else must be a file (perhaps we should check for
     // FILE_ATTRIBUTE_REPARSE_POINT?)
     return acceptFile;
-#else // Non-MSW, non-OS/2
+#else // Non-MSW
     wxStructStat st;
     if ( !StatAny(st, strPath, flags) )
         return false;

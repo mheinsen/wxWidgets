@@ -84,6 +84,7 @@
             strings/vararg.cpp
             strings/crt.cpp
             strings/vsnprintf.cpp
+            strings/hexconv.cpp
             streams/bstream.cpp
             streams/datastreamtest.cpp
             streams/ffilestream.cpp
@@ -180,6 +181,8 @@
             graphics/measuring.cpp
             graphics/affinematrix.cpp
             graphics/boundingbox.cpp
+            graphics/clippingbox.cpp
+            graphics/graphmatrix.cpp
             config/config.cpp
             controls/bitmapcomboboxtest.cpp
             controls/bitmaptogglebuttontest.cpp
@@ -328,6 +331,7 @@
     </template>
 
     <wx-data id="fr" template="catalog"/>
+    <wx-data id="ja" template="catalog"/>
 
 
     <fragment format="autoconf">
